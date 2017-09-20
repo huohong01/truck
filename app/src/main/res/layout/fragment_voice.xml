@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true"
+    android:background="@color/primary_txt">
+
+    <!-- Video Control Buttons -->
+    <LinearLayout
+        android:id="@+id/voice_controls_wrapper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal"
+        android:layout_marginBottom="35dp">
+
+        <!-- Mute Microphone button -->
+        <ImageView
+            android:id="@+id/voice_mute"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@drawable/voice_button"/>
+        <!-- Video End toggle -->
+        <ImageView
+            android:id="@+id/voice_end"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@drawable/audio_button"/>
+
+        <!-- Show the Chat Window -->
+        <ImageView
+            android:id="@+id/voice_show_chat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@drawable/chat_button"/>
+
+
+
+        <!-- Show the handsfree -->
+        <ImageView
+            android:id="@+id/voice_show_handsfree"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:visibility="gone"
+            android:src="@drawable/hands_free"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/voice_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="name"
+        android:textColor="@color/white"
+        android:layout_margin="20dp"
+        android:layout_centerInParent="true"
+        android:textSize="@dimen/padding_20dp"/>
+
+    <ImageView
+        android:id="@+id/voice_avatar"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@id/voice_name"
+        android:src="@drawable/empty_avatar"
+        />
+
+    <TextView
+        android:id="@+id/voice_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_above="@id/voice_controls_wrapper"
+        android:text="12:33"
+        android:padding="@dimen/padding_10dp"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_medium"/>
+
+    <RelativeLayout
+        android:id="@+id/voice_progressbar_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ProgressBar
+            android:id="@+id/voice_progressbar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:indeterminate="true"/>
+    </RelativeLayout>
+
+    <FrameLayout
+        android:id="@+id/voice_fragment_holder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</RelativeLayout>

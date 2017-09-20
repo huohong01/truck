@@ -1,0 +1,293 @@
+<resources>
+    <string name="app_name">NetMe</string>
+    <string name="encrypted_file_extension" translatable="false">.sdf</string>
+    <string name="aes_tag" translatable="false">a128</string>
+    <string name="default_avatar" translatable="false">gravatar.com/avatar/</string>
+    <string name="eula_url" translatable="false">http://idgmimobile.com/EULA/Gatca.html</string>
+
+    <!-- General Words and Phrases -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="accept">Accept</string>
+    <string name="decline">Decline</string>
+    <string name="or">Or</string>
+    <string name="send">Send</string>
+    <string name="submit">Submit</string>
+    <string name="minit_pay">MiNit Pay</string>
+    <string name="change_theme">Theme</string>
+    <string name="sign_up">Sign up</string>
+    <string name="login">Sign In</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="about_netme">About NetMe</string>
+    <string name="change_pwd">Change Password</string>
+    <string name="success">Success!</string>
+    <string name="try_again">Try Again</string>
+    <string name="username">Username</string>
+    <string name="email">Email</string>
+    <string name="signIn">SIGN IN</string>
+    <string name="password">Password</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="remember_me">Remember me</string>
+
+    <string name="search">Search</string>
+    <string name="please_wait">Please Wait</string>
+    <string name="edit">Edit</string>
+    <string name="save">Save</string>
+    <string name="saving">Saving…</string>
+    <string name="delete">Delete</string>
+    <string name="text_copy">Copy Text</string>
+    <string name="start">Start</string>
+    <string name="remove">Remove</string>
+    <string name="new_message">New Message</string>
+    <string name="group_title">Group Chat</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="choose_photo">Choose existing photo</string>
+    <string name="verify">Verify</string>
+    <string name="retry">Retry</string>
+    <string name="registered">Registered</string>
+    <string name="add_favorites">Add To Favorites</string>
+    <string name="remove_favorites">Remove From Favorites</string>
+    <string name="deleted_user_name">Deleted User</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="unknown">Unknown</string>
+    <string name="notification_new_msg_prefix">New Chat from </string>
+    <string name="all">All</string>
+    <string name="missed">Missed</string>
+    <string name="incoming">Incoming</string>
+    <string name="outgoing">Outgoing</string>
+    <string name="participants">Participants</string>
+    <string name="sign_in">SIGN IN</string>
+    <string name="sign__out">SIGN OUT?</string>
+    <string name="scan_code">SCAN CODE</string>
+    <string name="show_code">SHOW CODE</string>
+    <string name="balance">BALANCE</string>
+    <string name="yes">YES</string>
+    <string name="Continue">CONTINUE</string>
+    <string name="account_code">USER ACCOUNT CODE</string>
+    <string name="transaction_hint">MERCHANT SCAN CODE TO COMPLETE TRANSACTION</string>
+    <string name="approved">APPROVED</string>
+
+    <!-- Errors -->
+    <string name="error">Error</string>
+    <string name="error_unexpected">Unexpected error occurred, try again later.</string>
+    <string name="error_null">First Name or Last Name can not be null.</string>
+    <string name="error_unexpected_message">UnExpected error occurred, message can not be shown.</string>
+    <string name="error_connection">Unable to connect to the Internet. Check your internet connection and try again later.</string>
+    <string name="error_login">Failed to sign in, try again later.</string>
+    <string name="error_rooted">It has been detected that your device may be rooted! This application does not work on rooted devices. If you believe this is an error, please contact us at Macate.com.</string>
+    <string name="error_register">Failed to register with those credentials. Check your information and try again.</string>
+    <string name="error_chat_remove">Failed to delete chat</string>
+    <string name="error_no_selected_contacts">Please select one or more contacts</string>
+    <string name="error_send">Failed to send, click to retry</string>
+    <string name="error_send_general">Failed to send</string>
+    <string name="error_save_file">Failed to save the file</string>
+    <string name="error_start_record">Failed to start recording</string>
+    <string name="error_play_back">Failed to start playback</string>
+    <string name="error_load_image">Error loading image</string>
+    <string name="error_file_open">No suitable app to open the file or unknown file type</string>
+    <string name="error_sound_location">Failed to open sound save location</string>
+    <string name="error_load">Failed to load</string>
+    <string name="error_load_message">Failed to retrieve the message\nClick to retry.</string>
+    <string name="error_camera_permissions">Permissions for the camera and storage are required to take a photo</string>
+    <string name="error_invalid_pin">Invalid Pin</string>
+    <string name="error_invalid_service">GCM service is not available</string>
+    <string name="error_null_serverPin">serverPin is null</string>
+    <string name="error_invalid_entry">Invalid Entry</string>
+    <string name="error_server">Server error. Try again later</string>
+    <string name="error_send_encrypted">Failed to send Encrypted message. Try again later.</string>
+    <string name="error_meeting_remove">Failed to remove the meeting</string>
+
+    <!-- Startup -->
+    <string name="welcome">Welcome!\nPlease Sign In</string>
+    <string name="password_short">Password is too short (8 char min.)</string>
+    <string name="password_required">Password is required</string>
+    <string name="required">This is required</string>
+    <string name="invalid">Invalid entry</string>
+    <string name="login_forgot">Forgot password?</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="have_an_account">Have an Account? Sign In!</string>
+    <string name="register_password_requirements">Password Requirements:\n\t\tAt least 4 characters</string>
+    <!--<string name="register_password_requirements">Password Requirements:\n\t\tAt least 8 characters\n\t\tAt least 1 upper case letter\n\t\tAt least 1 lower case letter\n\t\tAt least 1 special character</string>-->
+    <string name="recover_account">Account Recovery</string>
+    <string name="recovery_success_top_message">Please check your inbox and follow the instructions on how to reset your password</string>
+    <string name="recovery_success_return">Return to SIGN IN screen</string>
+    <string name="recovery_failed_header">Something is Wrong!</string>
+    <string name="recovery_failed_message">We were not able to find your email in our records.</string>
+    <string name="recovery_message">Enter Your Email To Recover Your Password</string>
+    <string name="password_conf">Confirm Password</string>
+    <string name="password_mismatch">Passwords don\'t match</string>
+    <string name="phone_dialog_verify_top">We will be verifying the phone number:</string>
+    <string name="phone_dialog_verify_bottom">Is this OK, or would you like to edit the number?</string>
+    <string name="phone_retrieval_top_msg">Messenger needs to send an SMS message to verify your phone number.\n\nSelect your country and phone number:</string>
+    <string name="phone_retrieval_Bottom_msg">Carrier SMS charges may apply</string>
+    <string name="pin_retrieval_auto_msg">Waiting to automatically detect the SMS message with the verification pin.</string>
+    <string name="pin_retrieval_manual_msg">An SMS message is being sent. Please enter the verification pin in the message.</string>
+    <string name="pin_retrieval_bottom_msg">Enter the 6-digit code</string>
+    <string name="verification_pin">Verification Pin</string>
+    <string name="choose_number">Choose a number:</string>
+    <string name="change_pwd_success_top_message">Your password has been changed successfully and you can sign in again</string>
+    <string name="change_pwd_failed_message">Your password change failed and you can try again</string>
+
+    <!-- Main -->
+    <string name="disturb_mode">Do Not Disturb</string>
+    <string name="profile_settings">Profile Settings</string>
+    <string name="eula">Terms of Use</string>
+    <string name="drawer_open">open drawer</string>
+    <string name="drawer_close">close drawer</string>
+    <string name="sign_out_dialog_message">Do you wish to sign out?</string>
+    <string name="minit_pay_dialog_message">Do you want to start MiNit Pay?</string>
+    <string name="skip_introduce">Do you want to introduce button options ?</string>
+    <string name="change_pwd_dialog_message">Do you want to change password?</string>
+    <string name="switch_users_dialog_message">Switching users will require the new phone number to be revivified for this device. Do you wish to switch users?</string>
+    <string name="change_skin_dialog_message">Do you wish to apply new skin ?</string>
+    <string name="chat_removed">Chat deleted</string>
+    <string name="remove_favorite_confirmation">Do you want to remove %s from the favorite list?</string>
+    <string name="refresh">Refresh</string>
+    <string name="message_attachment"><![CDATA[<Encrypted Attachment>]]></string>
+    <string name="no_chats">No Chats</string>
+    <string name="no_favorites">No Favorites</string>
+    <string name="no_contacts">No Contacts</string>
+    <string name="meeting_removed">Meeting removed</string>
+    <string name="no_recent">No History</string>
+    <string name="skip_no">Yes, next</string>
+    <string name="skip_yes">No, thanks</string>
+
+    <!-- Chat -->
+    <string name="voice">Voice</string>
+    <string name="file">File</string>
+    <string name="camera">Camera</string>
+    <string name="location">Location</string>
+    <string name="voice_message">Voice Message</string>
+    <string name="maps_marker_title">Drag to desired location</string>
+    <string name="edit_message_title">Edit Message</string>
+    <string name="file_stored_downloads">File saved into download folder</string>
+    <string name="edit_text">Edit Text</string>
+    <string name="sending">Sending…</string>
+    <string name="loading">Loading…</string>
+    <string name="enter_message">Enter Message</string>
+
+    <!-- Used in the Chat Activity -->
+    <string name="chat_fullscreen">Fullscreen</string>
+    <string name="chat_mute_speaker">Mute Speaker</string>
+    <string name="chat_mute_mic">Mute Mic</string>
+    <string name="calling_text">Starting Video Call With</string>
+    <string name="answer_text">Incoming Video Call From</string>
+    <string name="receiving_text">Incoming Call From</string>
+    <string name="connecting_text">Connecting…</string>
+    <string name="menu_video_elapsed_time">Call Time</string>
+    <string name="incoming_call">Incoming Call</string>
+
+    <!-- Used in the Text Fragment-->
+    <string name="chat_attach">Attach</string>
+    <string name="menu_chat_file">File</string>
+    <string name="menu_chat_image">Image</string>
+    <string name="menu_chat_camera">Camera</string>
+    <string name="menu_chat_location">Location</string>
+    <string name="chat_entry_hint">Enter message</string>
+    <string name="menu_save_image">Save image</string>
+    <string name="chat_loading_fail">Failed to load chat, click to retry.</string>
+    <string name="message_status_sending">Sending…</string>
+    <string name="message_status_loading">Loading…</string>
+    <string name="message_status_failed">Failed</string>
+
+    <!-- Permission -->
+    <string name="permission_request_title">Permission Request</string>
+    <string name="permission_basic_required_rationale">The following permissions are required for Messenger to work:\n- Phone to verify device\n- Storage to save messages</string>
+    <string name="permission_read_sms_rationale">Access to read SMS will allow the verification pin to be automatically read. Otherwise, you would have to enter the pin code after receiving the SMS.</string>
+    <string name="permission_read_phone_state_rationale">Access to your phone is need to identify this device. No calls will be made.</string>
+    <string name="permission_camera_rationale">Access to your camera is required to be able to send picture messages.</string>
+    <string name="add_contact">Add Contact</string>
+    <string name="switch_users">Switch Users</string>
+    <string name="change_skin">Change Skin</string>
+    <string name="error_chat_edit">Failed to edit the message</string>
+    <string name="error_chat_delete">Failed to delete the message</string>
+    <string name="chat_view_new_msg">View new message</string>
+    <string name="add_selected_contact_msg">Would you like to add this contact to your phone\'s address book?</string>
+    <string name="date">Date</string>
+    <string name="end_video">End Video</string>
+    <string name="start_video">Start Video</string>
+    <string name="start_typing">typing</string>
+    <string name="change_chat_name">Update Chat Name</string>
+    <string name="error_email_registered">The entered email is already registered! Try a different email.</string>
+    <string name="done">Done</string>
+    <string name="invite_msg">I\'m inviting you to join me in using NetMe messenger. Here\'s the link: https://goo.gl/5dSOTj</string>
+    <string name="send_invite">Share NetMe</string>
+
+    <!-- Tutorials -->
+    <string name="initial_page_1_title">Welcome</string>
+    <string name="initial_page_1_description">NetMe delivers a simple and easy way to instant messaging, audio, or video chat in a secure environment.</string>
+    <string name="initial_page_2_title">Phone Number</string>
+    <string name="initial_page_2_description">NetMe uses your phone number as your account username. We will need to verify the phone number you enter is yours. This also helps to keep your conversations and data more secure.</string>
+    <string name="initial_page_3_title">Lets get started</string>
+    <string name="initial_page_3_description">First lets verify your phone number and get you registered and logged in. Then we can continue to show you what NetMe has to offer.</string>
+    <string name="main_messages_tab_title">Messages Tab</string>
+    <string name="main_messages_tab_description">This tab Lists all your text chats</string>
+    <string name="main_messages_toolbar_title">Message Options</string>
+    <string name="main_messages_toolbar_description">Options allows you to search text Chats and start a new text chat</string>
+    <string name="main_recent_tab_title">Recent Tab</string>
+    <string name="main_recent_tab_description">This tab Lists all your video meeting history</string>
+    <string name="main_recent_toolbar_title">Recent Options</string>
+    <string name="main_recent_toolbar_description">Options allows you to filter meetings by missed, sent, or received calls, and search through meetings</string>
+    <string name="main_contact_tab_title">Contacts Tab</string>
+    <string name="main_contact_tab_description">This tab Lists all your contacts and shows which ones are registered</string>
+    <string name="main_contact_toolbar_title">Contact Options</string>
+    <string name="main_contact_toolbar_description">Options allows you to filter registered contacts, search Contacts, refresh the contact list, add a new contact, and share NetMe to multiple people</string>
+    <string name="main_favorite_tab_title">Favorites Tab</string>
+    <string name="main_favorite_tab_description">This tab Lists all your text chats</string>
+    <string name="main_favorite_toolbar_title">Favorite Options</string>
+    <string name="main_favorite_toolbar_description">Options allows you to search favorite contacts and add registered contacts as favorites</string>
+    <string name="chat_toolbar_title">Chat Options</string>
+    <string name="chat_toolbar_description">When in a chat with multiple people you will be allows to change the name of the chat, but when you not in a group chat you have the option to start a video chat with the person your chatting with</string>
+    <string name="chat_attachment_title">Attachments</string>
+    <string name="chat_attachment_description">You can send voice messages, images, files, or a location through here</string>
+    <string name="chat_text_entry_title">Message Entry</string>
+    <string name="chat_text_entry_description">Enter the text message you wish to send here</string>
+
+    <string-array name="spinner_recent">
+        <item>All</item>
+        <item>Missed</item>
+        <item>Incoming</item>
+        <item>Outgoing</item>
+    </string-array>
+
+    <string-array name="spinner_contact">
+        <item>All</item>
+        <item>Registered</item>
+    </string-array>
+
+    <string-array name="permissions">
+        <item>@string/permission_recode_audio_hint</item>
+        <item>@string/permission_get_accounts_hint</item>
+        <item>@string/permission_read_phone_hint</item>
+        <item>@string/permission_call_phone_hint</item>
+        <item>@string/permission_camera_hint</item>
+        <item>@string/permission_access_fine_location_hint</item>
+        <item>@string/permission_access_coarse_location_hint</item>
+        <item>@string/permission_read_external_hint</item>
+        <item>@string/permission_white_external_hint</item>
+    </string-array>
+
+
+    <string name="permission_get_accounts_hint">没有此权限，无法开启这个功能，请开启权限。PERMISSION_GET_ACCOUNTS
+    </string>
+    <string name="permission_read_phone_hint">没有此权限，无法开启这个功能，请开启权限。PERMISSION_READ_PHONE_STATE
+    </string>
+    <string name="permission_call_phone_hint">没有此权限，无法开启这个功能，请开启权限。PERMISSION_CALL_PHONE</string>
+    <string name="permission_camera_hint">没有此权限，无法开启这个功能，请开启权限。PERMISSION_CAMERA</string>
+    <string name="permission_access_fine_location_hint">
+        没有此权限，无法开启这个功能，请开启权限。PERMISSION_ACCESS_FINE_LOCATION
+    </string>
+    <string name="permission_access_coarse_location_hint">
+        没有此权限，无法开启这个功能，请开启权限。PERMISSION_ACCESS_COARSE_LOCATION
+    </string>
+    <string name="permission_read_external_hint">
+        没有此权限，无法开启这个功能，请开启权限。PERMISSION_READ_EXTERNAL_STORAGE
+    </string>
+    <string name="permission_white_external_hint">
+        没有此权限，无法开启这个功能，请开启权限。PERMISSION_WRITE_EXTERNAL_STORAGE
+    </string>
+    <string name="permission_recode_audio_hint">没有此权限，无法开启这个功能，请开启权限。PERMISSION_RECORD_AUDIO
+    </string>
+
+</resources>

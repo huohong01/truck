@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="raven-7.8.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.getsentry.raven/raven/7.8.0/3448dedc76c849fe462047b72ac9ad373a7b8a70/raven-7.8.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.getsentry.raven/raven/7.8.0/d7c3f958d39595e3b004a400b68b5c6eaf3eab85/raven-7.8.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

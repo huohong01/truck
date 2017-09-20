@@ -1,0 +1,1 @@
+include ':app', ':minitpay', ':theme', ':app_theme_green'

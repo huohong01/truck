@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="materialhelptutorial-1.2.0">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.android/build-cache/086a78280c10ab9608e317d6f010c47c7378c9b4/output/res" />
+      <root url="jar://$USER_HOME$/.android/build-cache/086a78280c10ab9608e317d6f010c47c7378c9b4/output/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/za.co.riggaroo/materialhelptutorial/1.2.0/fdccd79990f7caa2d065c1c7494ddb2fdd828be8/materialhelptutorial-1.2.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

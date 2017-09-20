@@ -1,0 +1,55 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    tools:context="com.hsdi.NetMe.ui.startup.recovery.RecoverySuccessFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primary">
+
+    <TextView
+        android:id="@+id/recovery_success_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:text="@string/success"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_extra_large"/>
+
+    <TextView
+        android:id="@+id/recovery_success_top_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/recovery_success_header"
+        android:layout_margin="20dp"
+        android:gravity="center"
+        android:text="@string/recovery_success_top_message"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_medium"/>
+
+    <ImageView
+        android:id="@+id/recovery_success_check"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/recovery_success_top_message"
+        android:adjustViewBounds="true"
+        android:layout_marginStart="80dp"
+        android:layout_marginEnd="80dp"
+        android:src="@drawable/check_icon"
+        android:tint="@color/primary_dark"/>
+
+    <TextView
+        android:id="@+id/recovery_success_bottom_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/recovery_success_check"
+        android:layout_margin="20dp"
+        android:gravity="center"
+        android:text="@string/recovery_success_return"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_medium"/>
+</RelativeLayout>

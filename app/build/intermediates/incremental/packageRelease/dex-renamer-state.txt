@@ -1,0 +1,7 @@
+#Fri Sep 01 13:54:56 CST 2017
+base.0=F\:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\transforms\\dex\\release\\folders\\1000\\1f\\main
+renamed.1=classes2.dex
+renamed.0=classes.dex
+file.1=F\:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\transforms\\dex\\release\\folders\\1000\\1f\\main\\classes2.dex
+base.1=F\:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\transforms\\dex\\release\\folders\\1000\\1f\\main
+file.0=F\:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\transforms\\dex\\release\\folders\\1000\\1f\\main\\classes.dex

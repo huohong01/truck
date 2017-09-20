@@ -1,0 +1,254 @@
+package com.hsdi.NetMe.ui.startup;
+
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.design.widget.TextInputEditText;
+import android.view.View;
+
+import com.hsdi.NetMe.NetMeApp;
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.models.response_models.AccountResponse;
+import com.hsdi.NetMe.network.RestServiceGen;
+import com.hsdi.NetMe.ui.main.MainActivity;
+import com.hsdi.NetMe.util.AccountInfoUtils;
+import com.hsdi.NetMe.util.DeviceUtils;
+import com.hsdi.NetMe.util.DialogUtils;
+import com.hsdi.NetMe.util.PreferenceManager;
+import com.hsdi.theme.basic.BaseThemeActivity;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class RegisterActivity extends BaseThemeActivity {
+
+    @Bind(R.id.register_username)TextInputEditText usernameTV;
+    @Bind(R.id.register_pass)TextInputEditText passET;
+    @Bind(R.id.register_pass_conf)TextInputEditText passConfET;
+    @Bind(R.id.register_email)TextInputEditText emailET;
+    @Bind(R.id.register_fname)TextInputEditText fNameET;
+    @Bind(R.id.register_lname)TextInputEditText lNameET;
+
+    private PreferenceManager manager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_register);
+        ButterKnife.bind(this);
+
+        manager = PreferenceManager.getInstance(this);
+
+        usernameTV.setText(NetMeApp.getCurrentUser());
+    }
+
+    /** Click Method. Checks the entered values and attempts to perform the registration */
+    public void onAcceptClicked(View view) {
+        String pass = AccountInfoUtils.checkPassword(this, passET, passConfET);
+        String email = AccountInfoUtils.checkEmail(this, emailET);
+        String fName = AccountInfoUtils.checkFirstName(this, fNameET);
+        String lName = AccountInfoUtils.checkLastName(this, lNameET);
+
+        if(pass != null && email != null && fName != null && lName != null) {
+            performRegistrationRequest(pass, email, fName, lName);
+        }
+    }
+
+    /** Click Method. Starts the login activity and closes this one */
+    public void onHaveAccountClicked(View view) {
+        goToLogin();
+    }
+
+    /**
+     * Attempts to Register the user with the information they entered
+     * @param pass     entered password
+     * @param email    entered email
+     * @param fName    entered first name
+     * @param lName    entered last name
+     * */
+    private void performRegistrationRequest(final String pass, final String email, final String fName, final String lName) {
+        final ProgressDialog progressDialog = DialogUtils.getProgressDialog(this);
+        progressDialog.show();
+
+        RestServiceGen.getUnCachedService()
+                .userRegister(
+                        manager.getCountryCallingCode(),
+                        manager.getPhoneNumber(),
+                        pass,
+                        email,
+                        fName,
+                        lName,
+                        manager.getGCMRegistrationId(),
+                        DeviceUtils.getDeviceId(this),
+                        DeviceUtils.getAppVersion(this),
+                        DeviceUtils.getPlatformVersion()
+                )
+                .enqueue(new Callback<AccountResponse>() {
+                    @Override
+                    public void onResponse(Call<AccountResponse> call, Response<AccountResponse> response) {
+                        // progress dialog is no longer needed
+                        progressDialog.dismiss();
+
+                        if(response == null || response.body() == null) {
+                            DialogUtils.getErrorDialog(
+                                    RegisterActivity.this,
+                                    R.string.error_connection
+                            ).show();
+                            return;
+                        }
+
+                        // registration worked, continue
+                        if(response.body().isSuccess()) {
+                            onRegisterSuccess(response.body(), pass);
+                        }
+                        // failed to register, check if old account
+                        else if(isOldAccount(response.body().getErrorMsg())) {
+                            performUserTransferRequest(pass, email, fName, lName);
+                        }
+                        // already registered email, show error
+                        else if(isEmailAlreadyRegistered(response.body().getErrorMsg(), email)) {
+                            DialogUtils.getErrorDialog(
+                                    RegisterActivity.this,
+                                    R.string.error_email_registered
+                            ).show();
+                        }
+                        // show error given by server
+                        else if(response.body().getErrorMsg() != null) {
+                            DialogUtils.getErrorDialog(
+                                    RegisterActivity.this,
+                                    response.body().getErrorMsg()
+                            ).show();
+                        }
+                        // if the response is bad show an general registration error
+                        else {
+                            DialogUtils.getErrorDialog(
+                                    RegisterActivity.this,
+                                    R.string.error_server
+                            ).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<AccountResponse> call, Throwable t) {
+                        // progress dialog is no longer needed
+                        progressDialog.dismiss();
+
+                        // if the response is bad show an general registration error
+                        DialogUtils.getErrorDialog(
+                                RegisterActivity.this,
+                                R.string.error_connection
+                        ).show();
+                    }
+                });
+    }
+
+    /**
+     * Determines if the response message means that the user has an old "Gatca Messenger" account
+     * @param message    the response message
+     * @return true if it is an old account, false otherwise
+     * */
+    private boolean isOldAccount(String message) {
+        return message != null &&
+                message.toLowerCase().contains("is already registered")
+                && message.toLowerCase().contains("@phone.com");
+    }
+
+    /**
+     * Checks if the message states that the email is registered
+     * @param message    the string message to check within
+     * @param email      the string email to look for
+     * @return {@code TRUE} if the email is already registered, {@code FALSE} otherwise
+     * */
+    private boolean isEmailAlreadyRegistered(String message, String email) {
+        return message != null &&
+                message.toLowerCase().contains("is already registered")
+                && message.toLowerCase().contains(email.toLowerCase());
+    }
+
+    /**
+     * Transfer the user from the old "Gatca Messenger" system to the new CodeTel Messenger login system
+     * @param pass     entered password
+     * @param email    entered email
+     * @param fName    entered first name
+     * @param lName    entered last name
+     * */
+    private void performUserTransferRequest(final String pass, final String email, final String fName, final String lName) {
+        final ProgressDialog progressDialog = DialogUtils.getProgressDialog(this);
+        progressDialog.show();
+
+        RestServiceGen.getUnCachedService()
+                .userTransferUpdate(
+                        manager.getCountryCallingCode(),
+                        manager.getPhoneNumber(),
+                        NetMeApp.getCurrentUser(),
+                        pass,
+                        fName,
+                        lName,
+                        email,
+                        manager.getGCMRegistrationId(),
+                        DeviceUtils.getDeviceId(this),
+                        DeviceUtils.getAppVersion(this),
+                        DeviceUtils.getPlatformVersion()
+                )
+                .enqueue(new Callback<AccountResponse>() {
+                    @Override
+                    public void onResponse(Call<AccountResponse> call, Response<AccountResponse> response) {
+                        // progress dialog is no longer needed
+                        progressDialog.dismiss();
+
+                        AccountResponse accResponse = response.body();
+
+                        if(accResponse.isSuccess()) {
+                            manager.setPassword(pass);
+                            manager.setFirstName(accResponse.getFirstName());
+                            manager.setLastName(accResponse.getLastName());
+                            manager.setEmail(accResponse.getEmail());
+                            manager.setAvatarUrl(accResponse.getAvatarUrl());
+
+                            goToLogin();
+                        }
+                        else {
+                            DialogUtils.getErrorDialog(
+                                    RegisterActivity.this,
+                                    R.string.error_unexpected
+                            ).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<AccountResponse> call, Throwable t) {
+                        // progress dialog is no longer needed
+                        progressDialog.dismiss();
+
+                        // if here, assuming that there is a connection problem
+                        DialogUtils.getErrorDialog(RegisterActivity.this, R.string.error_connection).show();
+                    }
+                });
+    }
+
+    /** starts the main activity, and finishes this activity */
+    private void onRegisterSuccess(AccountResponse accResponse, String password) {
+        //storing the user's information
+        manager.setPassword(password);
+        manager.setFirstName(accResponse.getFirstName());
+        manager.setLastName(accResponse.getLastName());
+        manager.setEmail(accResponse.getEmail());
+        manager.setAvatarUrl(accResponse.getAvatarUrl());
+
+        //goes to the main activity
+        Intent mainIntent = new Intent(this, MainActivity.class);
+        this.startActivity(mainIntent);
+        finish();
+    }
+
+    /** starts the login activity, and finishes this activity */
+    private void goToLogin() {
+        //goes to the main activity
+        Intent loginIntent = new Intent(this, LoginActivity.class);
+        this.startActivity(loginIntent);
+        finish();
+    }
+}

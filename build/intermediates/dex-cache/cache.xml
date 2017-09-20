@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        is-multidex="true"
+        jar="F:\work\dailyWork\20170821\NetMe\app\libs\opentok-android-sdk-2.7.0.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.0"
+        sha1="e10db74e42016176568e8da6f67796a7883aa61e">
+        <dex dex="F:\work\dailyWork\20170821\NetMe\app\build\intermediates\transforms\dex\debug\folders\1000\2\opentok-android-sdk-2.7.0_5950cd073572425ce2bd5149b09ea2ace93aedcf\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="F:\work\dailyWork\20170821\NetMe\app\build\intermediates\incremental-runtime-classes\debug\instant-run.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.0"
+        sha1="3be78ebc2706b2e1fe2f12d5726887a92d6c183b">
+        <dex dex="F:\work\dailyWork\20170821\NetMe\app\build\intermediates\transforms\dex\debug\folders\1000\10000\instant-run_a3878a2cb5dd8b7791787abda734af351b2d4bc6\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="F:\work\dailyWork\20170821\NetMe\app\build\intermediates\incremental-classes\debug\instant-run-bootstrap.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.0"
+        sha1="66f229cf5877f42fadfa35471af69d4bb134573f">
+        <dex dex="F:\work\dailyWork\20170821\NetMe\app\build\intermediates\transforms\dex\debug\folders\1000\10000\instant-run-bootstrap_ca466ed6fe1a114c70cdec77e9b88de7f255fb5f\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="F:\work\dailyWork\20170821\NetMe\app\libs\csmp.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.0"
+        sha1="0e68c565e9ead076fb4426f16cdad0632fc806b7">
+        <dex dex="F:\work\dailyWork\20170821\NetMe\app\build\intermediates\transforms\dex\debug\folders\1000\2\csmp_7c71af7b4a803100685f965839dfcb6e82461bd1\classes.dex" />
+    </item>
+
+</items>

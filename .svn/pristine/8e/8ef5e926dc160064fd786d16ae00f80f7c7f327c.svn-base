@@ -1,0 +1,477 @@
+package com.hsdi.NetMe.ui.main.message_logs;
+
+import android.app.Activity;
+import android.app.SearchManager;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.database.ChatMessageManager;
+import com.hsdi.NetMe.database.ChatTrackerManager;
+import com.hsdi.NetMe.database.ParticipantManager;
+import com.hsdi.NetMe.models.Chat;
+import com.hsdi.NetMe.models.Message;
+import com.hsdi.NetMe.models.Participant;
+import com.hsdi.NetMe.models.events.EventContactList;
+import com.hsdi.NetMe.models.events.EventMessageLog;
+import com.hsdi.NetMe.models.response_models.BaseResponse;
+import com.hsdi.NetMe.models.response_models.GetChatLogsResponse;
+import com.hsdi.NetMe.network.RestServiceGen;
+import com.hsdi.NetMe.ui.chat.ChatActivity;
+import com.hsdi.NetMe.ui.contact_selection.SelectContactsActivity;
+import com.hsdi.NetMe.util.PreferenceManager;
+import com.hsdi.theme.basic.BaseThemeActivity;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.Arrays;
+import java.util.List;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static com.hsdi.theme.basic.ThemeLayoutInflaterFactory.ThemeTypeValue.menuitem_icon;
+
+/**
+ * Fragment class which displays a list of the most recent messages from each chat
+ */
+public class MessageLogFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
+    private static final String TAG = "MsgFrag";
+
+    private static final int REQUEST_CODE_MSG_CONTACTS = 3000;
+
+    @Bind(R.id.main_swipe_refresh) SwipeRefreshLayout swipeRefreshLayout;
+    @Bind(R.id.main_recycler_view) RecyclerView recyclerList;
+    @Bind(R.id.main_empty_message) TextView emptyMsg;
+
+    private static final int defLoadCount = 25;
+
+    private MessageLogAdapter recyclerAdapter;
+    private LinearLayoutManager listLayoutManager;
+    private PreferenceManager manager;
+
+    private boolean isLoading = false;
+    private int totalChats = 0;
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View main = inflater.inflate(R.layout.fragment_main, container, false);
+        ButterKnife.bind(this, main);
+
+        setHasOptionsMenu(true);
+
+        swipeRefreshLayout.setColorSchemeResources(R.color.primary_accent, R.color.primary, R.color.primary_dark, R.color.primary);
+        swipeRefreshLayout.setOnRefreshListener(this);
+
+        setupRecyclerList();
+
+        manager = PreferenceManager.getInstance(getActivity());
+
+        List<Chat> chats = ChatTrackerManager.getAllChats(getActivity());
+        Log.i("yuyong_messages", "onCreateView: decryptedMessage = " + chats.size());
+        if (chats.size() > 0) {
+            recyclerAdapter.addAll(chats);
+        } else {
+            // Load the messages
+            loadList(defLoadCount, -1);
+        }
+
+        // Register broadcast receiver
+        EventBus.getDefault().register(this);
+
+        return main;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_MSG_CONTACTS && resultCode == Activity.RESULT_OK) {
+            // get the selected numbers
+            String[] selectedArray = data.getStringArrayExtra(SelectContactsActivity.RESULT_CONTACT_NUMBERS);
+            List<String> selectedList = Arrays.asList(selectedArray);
+
+            // check if a chat already exists
+            long chatId = ChatTrackerManager.getChatIdFromUserList(getActivity(), selectedList);
+
+            // chat exists so continue it
+            if(chatId >= 0) {
+                Intent intent = new Intent(getActivity(), ChatActivity.class);
+                intent.putExtra(ChatActivity.EXTRA_CHAT_TYPE, ChatActivity.TYPE_TEXT_ONLY);
+                intent.putExtra(ChatActivity.EXTRA_CHAT_ID, chatId);
+                startActivity(intent);
+            }
+            else {
+                // prepare the invited user string
+                String invitedUsers = Arrays.toString(selectedArray);
+                invitedUsers = invitedUsers.replace("[", "").replace("]", "").replace(" ", "");
+
+                // start chat and finish this activity
+                Intent intent = new Intent(getActivity(), ChatActivity.class);
+                intent.putExtra(ChatActivity.EXTRA_CHAT_TYPE, ChatActivity.TYPE_TEXT_ONLY);
+                intent.putExtra(ChatActivity.EXTRA_INVITED, invitedUsers);
+                startActivity(intent);
+            }
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        EventBus.getDefault().unregister(this);
+        recyclerAdapter = null;
+        listLayoutManager = null;
+        manager = null;
+        super.onDestroy();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        Log.i(TAG, "onCreateOptionsMenu: ");
+        inflater.inflate(R.menu.menu_msg, menu);
+
+      //  getActivity().invalidateOptionsMenu();
+        setupSearchView(menu);
+      //  ((BaseThemeActivity)getActivity()).applyTheme(searchView,R.drawable.search, ThemeLayoutInflaterFactory.ThemeTypeValue.background_drawable);
+      //  ((BaseThemeActivity)getActivity()).applyTheme(addView,R.drawable.add, ThemeLayoutInflaterFactory.ThemeTypeValue.background_drawable);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        Log.i(TAG, "onPrepareOptionsMenu: ");
+        //先获取视图View
+        View searchView= menu.findItem(R.id.menu_search).getActionView();
+        View addView = menu.findItem(R.id.menu_item_add_msg).getActionView();
+
+        //menu.findItem(R.id.menu_item_add_msg).setIcon(R.drawable.attach);
+        //((BaseThemeActivity)getActivity()).applyTheme(searchView,R.drawable.attach, ThemeLayoutInflaterFactory.ThemeTypeValue.src);
+        ((BaseThemeActivity)getActivity()).applyTheme(menu.findItem(R.id.menu_search),R.drawable.search,menuitem_icon);
+        ((BaseThemeActivity)getActivity()).applyTheme(menu.findItem(R.id.menu_item_add_msg),R.drawable.add,menuitem_icon);
+        super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_add_msg:
+                Intent msgIntent = new Intent(getActivity(), SelectContactsActivity.class);
+                msgIntent.putExtra(
+                        SelectContactsActivity.EXTRA_CONTACT_TYPE,
+                        SelectContactsActivity.REGISTERED
+                );
+
+                startActivityForResult(msgIntent, REQUEST_CODE_MSG_CONTACTS);
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public void onRefresh() {
+        int reloadCount = recyclerAdapter.getTotalCount();
+        if(reloadCount < defLoadCount) reloadCount = defLoadCount;
+
+        //refresh all the items currently being shown
+        loadList(reloadCount, -1);
+    }
+
+    /** Sets up the search area to filter the message log list in the adapter */
+    private void setupSearchView(Menu menu) {
+        MenuItem searchItem = menu.findItem(R.id.menu_search);
+        MenuItem addItem = menu.findItem(R.id.menu_item_add_msg);
+
+        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+
+        SearchView searchView  = null;
+        if (searchItem != null){ searchView = (SearchView) searchItem.getActionView();
+         //   searchView.setBackgroundResource(R.drawable.add);
+       }
+
+        if (searchView != null) {
+            searchView.setSearchableInfo(searchManager.getSearchableInfo(getActivity().getComponentName()));
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    if (recyclerAdapter != null)
+                        recyclerAdapter.filter(newText);
+
+                    return true;
+                }
+            });
+        }
+
+        // Show only the toolbar when SearchView is expanded, and vice versa
+        MenuItemCompat.setOnActionExpandListener(searchItem, new MenuItemCompat.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                return true;
+            }
+        });
+    }
+
+    /**
+     * EventBus listener method which refresh's the entire list every time a EventMessageLog
+     * event is posted
+     * @param eventMessageLog    the posted event, ignored
+     * */
+    @SuppressWarnings("unused")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updateMessageLog(EventMessageLog eventMessageLog){
+        onRefresh();
+    }
+
+    /**
+     * EventBus subscriber method which update the contacts when ever a change is made
+     * @param eventContactList    the posted event, ignored
+     * */
+    @SuppressWarnings("unused")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updateContacts(EventContactList eventContactList){
+        if(recyclerAdapter != null) recyclerAdapter.notifyDataSetChanged();
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /** Show the SwipeRefreshLayout refreshing spinner. Makes sure it is done on the main thread. */
+    private void showLoadingBar() {
+        if(swipeRefreshLayout != null) {
+            swipeRefreshLayout.post(new Runnable() {
+                @Override
+                public void run() {
+                    swipeRefreshLayout.setRefreshing(true);
+                }
+            });
+        }
+    }
+
+    /** Hide the SwipeRefreshLayout refreshing spinner. Makes sure it is done on the main thread. */
+    private void hideLoadingBar() {
+        if(swipeRefreshLayout != null)
+            swipeRefreshLayout.post(new Runnable() {
+                @Override
+                public void run() {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+            });
+    }
+
+    /**
+     * Sets up the list with the linear layout manager, adapter, and scroll listener which will
+     * request that the list gets the next set when the bottom is reached.
+     * */
+    private void setupRecyclerList() {
+        recyclerAdapter = new MessageLogAdapter(this);
+        listLayoutManager = new LinearLayoutManager(getActivity());
+
+        recyclerList.setLayoutManager(listLayoutManager);
+        recyclerList.setAdapter(recyclerAdapter);
+
+        recyclerList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                // ignore if everything has already been loaded or is currently loading or there is nothing else to load
+                if(recyclerAdapter == null || recyclerAdapter.getTotalCount() >= totalChats || isLoading || totalChats <= 0)
+                    return;
+
+                // load the list when near the bottom, the list isn't empty, & it isn't already loading
+                int lastVisible = listLayoutManager.findLastCompletelyVisibleItemPosition();
+                int lowerLoadLimit = recyclerAdapter.getTotalCount() - 2;
+                if(lastVisible >= lowerLoadLimit) {
+                    loadList(defLoadCount, recyclerAdapter.getOldestChatSeconds());
+                }
+            }
+        });
+    }
+
+    /** Updates the empty message depending on the total items of messages */
+    private void updateEmptyMessage() {
+        if(recyclerAdapter.getTotalCount() < 1) emptyMsg.setText(R.string.no_chats);
+        else emptyMsg.setText("");
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Removes a chat from the logs, both locally and on the server
+     * @param chat    the chat to be removed
+     * */
+    public void removeChat(final Chat chat) {
+        //show loading
+        showLoadingBar();
+        isLoading = true;
+
+        //perform the remove request
+        RestServiceGen.getUnCachedService()
+                .removeChat(
+                        manager.getCountryCallingCode(),
+                        manager.getPhoneNumber(),
+                        manager.getPassword(),
+                        chat.getChatId()
+                )
+                .enqueue(new Callback<BaseResponse>() {
+                    @Override
+                    public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                        //done loading
+                        hideLoadingBar();
+                        isLoading = false;
+
+                        if(response != null && response.body() != null && response.body().isSuccess()) {
+                            recyclerAdapter.remove(chat);
+                            totalChats--;
+                            ChatTrackerManager.removeChatId(getActivity(), chat.getChatId());
+                            Toast.makeText(getActivity(), R.string.chat_removed, Toast.LENGTH_SHORT).show();
+                        }
+                        // if the response was bad, allow the user to retry
+                        else showRetry();
+
+                        updateEmptyMessage();
+                    }
+
+                    @Override
+                    public void onFailure(Call<BaseResponse> call, Throwable t) {
+                        //done loading
+                        hideLoadingBar();
+                        isLoading = false;
+
+                        showRetry();
+                        updateEmptyMessage();
+                    }
+
+                    /** Shows a retry option to allow the user to retry deleting the chat */
+                    private void showRetry() {
+                        if (recyclerList == null){
+                            return;
+                        }
+                        Snackbar.make(recyclerList, R.string.error_chat_remove, Snackbar.LENGTH_LONG)
+                                .setAction(
+                                        R.string.retry,
+                                        new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                removeChat(chat);
+                                            }
+                                        }
+                                )
+                                .show();
+                    }
+                });
+    }
+
+    /**
+     * Loads a list containing countLimit number of message chats with the most recent message
+     * which is older then the date passed for each chat
+     * @param countLimit       the maximum number of chats to load
+     * @param olderThanDate    a date in seconds which is newer then the newest message desired
+     * */
+    private void loadList(final int countLimit, final long olderThanDate) {
+        Log.i("yuyong_Msg", "loadList: ");
+        showLoadingBar();
+        isLoading = true;
+
+        RestServiceGen.getCachedService()
+                .getChatLogs(
+                        manager.getCountryCallingCode(),
+                        manager.getPhoneNumber(),
+                        manager.getPassword(),
+                        countLimit,
+                        olderThanDate < 0 ? "" : String.valueOf(olderThanDate)
+                )
+                .enqueue(new Callback<GetChatLogsResponse>() {
+                    @Override
+                    public void onResponse(Call<GetChatLogsResponse> call, Response<GetChatLogsResponse> response) {
+                        Log.d("messages", "on response");
+                        //if the response is good
+                        if(response != null && response.body() != null && response.body().isSuccess()) {
+                            //add the chats
+                            if(response.body().getChats() != null) {
+                                if (recyclerAdapter == null){
+                                    return;
+                                }
+                                final List<Chat> chats = response.body().getChats();
+                                Log.d("yuyong_messages", chats.size() + "");
+                                for (Chat chat : chats) {
+                                    List<Message> messages = chat.getMessages();
+                                    List<Participant> participants = chat.getParticipants();
+                                    ParticipantManager.addParticipants(getActivity(),participants);
+                                    ChatTrackerManager.storeChat(getActivity(), chat);
+                                    ChatMessageManager.addMessages(getActivity(), messages);
+                                }
+                                recyclerAdapter.addAll(response.body().getChats());
+                                totalChats = response.body().getTotalChats();
+                            }
+                        }
+                        //if the response was bad, allow the user to retry
+                        else showRetry();
+
+                        updateEmptyMessage();
+                        hideLoadingBar();
+                        isLoading = false;
+                    }
+
+                    @Override
+                    public void onFailure(Call<GetChatLogsResponse> call, Throwable t) {
+                        Log.d("messages", "on failure ", t);
+                        hideLoadingBar();
+                        isLoading = false;
+                        showRetry();
+                        updateEmptyMessage();
+                    }
+
+                    private void showRetry() {
+                        if (recyclerList == null){
+                            return;
+                        }
+                        Snackbar.make(recyclerList, R.string.error_load, Snackbar.LENGTH_LONG)
+                                .setAction(
+                                        R.string.retry,
+                                        new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                loadList(countLimit, olderThanDate);
+                                            }
+                                        }
+                                )
+                                .show();
+                    }
+                });
+    }
+}

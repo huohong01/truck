@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/chat_participant_avatar"
+        android:layout_width="@dimen/avatar_small"
+        android:layout_height="@dimen/avatar_small"
+        android:layout_centerVertical="true"
+        android:layout_margin="10dp"
+        android:src="@drawable/empty_avatar"/>
+
+    <TextView
+        android:id="@+id/chat_participant_letters"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignTop="@id/chat_participant_avatar"
+        android:layout_alignBottom="@id/chat_participant_avatar"
+        android:layout_alignStart="@id/chat_participant_avatar"
+        android:layout_alignEnd="@id/chat_participant_avatar"
+        android:gravity="center"
+        android:textColor="@color/secondary_txt_inverse"
+        android:textSize="@dimen/text_large"/>
+
+    <TextView
+        android:id="@+id/chat_participant_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/chat_participant_avatar"
+        android:layout_toEndOf="@id/chat_participant_avatar"
+        android:layout_marginTop="2dp"
+        android:text="@string/unknown"
+        android:textColor="@color/primary_txt_inverse"
+        android:textStyle="bold"
+        android:textSize="@dimen/text_medium_large"/>
+
+    <TextView
+        android:id="@+id/chat_participant_number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/chat_participant_avatar"
+        android:layout_toEndOf="@id/chat_participant_avatar"
+        android:layout_marginBottom="2dp"
+        android:text="@string/unknown"
+        android:textSize="@dimen/text_medium"/>
+
+    <ImageButton
+        android:id="@+id/chat_participant_chat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toStartOf="@+id/chat_participant_video"
+        android:layout_marginEnd="15dp"
+        android:padding="5dp"
+        android:src="@drawable/message"
+        android:background="@android:color/transparent"/>
+
+    <ImageButton
+        android:id="@+id/chat_participant_video"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="15dp"
+        android:padding="5dp"
+        android:src="@drawable/video"
+        android:background="@android:color/transparent"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_toEndOf="@id/chat_participant_avatar"
+        android:layout_below="@id/chat_participant_avatar"
+        android:background="@color/divider"/>
+</RelativeLayout>

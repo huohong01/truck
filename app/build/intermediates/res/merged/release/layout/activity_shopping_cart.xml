@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white">
+
+
+        <include layout="@layout/toolbar" android:id="@+id/toolbar"/>
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:id="@+id/ivMerchantLogo"
+            android:src="@drawable/logo_minit"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:layout_below="@+id/toolbar"
+            android:layout_marginTop="@dimen/padding_20dp"
+            android:layout_marginLeft="@dimen/padding_70dp"
+            android:layout_marginRight="@dimen/padding_70dp" />
+
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Starbucks"
+            android:layout_below="@+id/ivMerchantLogo"
+            android:layout_marginTop="@dimen/padding_10dp"
+            android:id="@+id/tvMerchantName"
+            android:textColor="@color/black"
+            android:gravity="center_horizontal"
+            android:textSize="@dimen/smallFontSize"
+            android:padding="@dimen/padding_10dp"
+            app:fontFamily="roboto"
+            app:textWeight="normal" />
+
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:background="@color/btnBackground"
+            android:id="@+id/btnPay"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            android:padding="@dimen/padding_15dp"
+            android:textSize="@dimen/buttonFontSize"
+            android:text="@string/pay"
+            android:layout_below="@+id/tvMerchantName"
+            android:layout_centerHorizontal="true"></Button>
+
+        <ListView
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:id="@+id/lvItems"
+            android:layout_margin="@dimen/padding_10dp"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            android:layout_below="@+id/btnPay" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:id="@+id/vDivider1"
+            android:background="@color/bgGray"
+            android:layout_below="@id/lvItems"
+            android:layout_alignStart="@+id/btnPay"
+            android:layout_alignEnd="@+id/btnPay"
+            />
+
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/subtotal_label"
+            android:layout_below="@+id/vDivider1"
+            android:id="@+id/tvSubTotalLabel"
+            android:layout_marginTop="@dimen/padding_10dp"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            android:textColor="@color/black"
+            android:textSize="@dimen/smallFontSize"
+            app:fontFamily="roboto"
+            app:textWeight="normal" />
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/subtotal_label"
+            android:layout_below="@+id/vDivider1"
+            android:layout_alignParentRight="true"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            android:layout_marginTop="@dimen/padding_10dp"
+            android:id="@+id/tvSubTotal"
+            android:textColor="@color/black"
+            android:textSize="@dimen/smallFontSize"
+            app:fontFamily="roboto"
+            app:textWeight="normal" />
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sales_tax"
+            android:layout_below="@+id/tvSubTotalLabel"
+            android:id="@+id/tvTaxLabel"
+            android:textColor="@color/black"
+            android:textSize="@dimen/smallFontSize"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            app:fontFamily="roboto"
+            app:textWeight="normal" />
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sales_tax"
+            android:layout_below="@+id/tvSubTotalLabel"
+            android:layout_alignParentRight="true"
+            android:id="@+id/tvTax"
+            android:textColor="@color/black"
+            android:textSize="@dimen/smallFontSize"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            app:fontFamily="roboto"
+            app:textWeight="normal" />
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tip"
+            android:layout_below="@+id/tvTaxLabel"
+            android:id="@+id/tvTipLabel"
+            android:textColor="@color/black"
+            android:textSize="@dimen/smallFontSize"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            app:fontFamily="roboto"
+            app:textWeight="normal"
+            android:layout_marginBottom="@dimen/padding_10dp"/>
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.00"
+            android:layout_below="@+id/tvTaxLabel"
+            android:layout_alignParentRight="true"
+            android:id="@+id/tvTip"
+            android:textColor="@color/black"
+            android:textSize="@dimen/smallFontSize"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            app:fontFamily="roboto"
+            app:textWeight="normal"
+            android:layout_marginBottom="@dimen/padding_10dp"/>
+
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:id="@+id/vDivider2"
+            android:background="@color/bgGray"
+            android:layout_below="@id/tvTipLabel"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp" />
+
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/total"
+            android:layout_below="@+id/vDivider2"
+            android:id="@+id/tvTotalLabel"
+            android:layout_marginTop="@dimen/padding_10dp"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            android:textColor="@color/black"
+            android:textSize="@dimen/smallFontSize"
+            app:fontFamily="roboto"
+            app:textWeight="normal" />
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/total"
+            android:layout_below="@+id/vDivider2"
+            android:layout_alignParentRight="true"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            android:layout_marginTop="@dimen/padding_10dp"
+            android:layout_marginBottom="@dimen/padding_20dp"
+            android:id="@+id/tvTotal"
+            android:textColor="@color/black"
+            android:textSize="@dimen/smallFontSize"
+            app:fontFamily="roboto"
+            app:textWeight="normal" />
+
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/bgGray"
+            android:id="@+id/btnCancel"
+            android:background="@android:color/transparent"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:layout_marginRight="@dimen/padding_10dp"
+            android:padding="@dimen/padding_15dp"
+            android:textSize="@dimen/buttonFontSize"
+            android:text="@string/cancel"
+            android:layout_below="@+id/tvTotal"
+            android:layout_centerHorizontal="true"></Button>
+    </RelativeLayout>
+</ScrollView>

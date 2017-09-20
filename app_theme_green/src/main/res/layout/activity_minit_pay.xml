@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_minit_pay"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:orientation="vertical"
+    android:gravity="center"
+    tools:context="com.hsdi.MiNitPay.MinitPayActivity">
+
+    <ImageView
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_margin="20dp"
+        android:src="@drawable/minit_logo"/>
+
+    <Button
+        android:id="@+id/btn_sign_in"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:text="@string/sign_in"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:padding="10dp"
+        android:layout_margin="20dp"
+        android:background="@drawable/btn_minitpay_selector"
+        android:textColor="@color/btn_textcolor"
+        android:onClick="signInMinitPay"/>
+
+    <Button
+        android:id="@+id/btn_scan_code"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:text="@string/scan_code"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:padding="10dp"
+        android:layout_margin="20dp"
+        android:background="@drawable/btn_minitpay_selector"
+        android:enabled="false"
+        android:textColor="@color/btn_textcolor"
+        android:onClick="scanCodeMinitPay"/>
+    <Button
+        android:id="@+id/btn_show_code"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:text="@string/show_code"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:padding="10dp"
+        android:layout_margin="20dp"
+        android:background="@drawable/btn_minitpay_selector"
+        android:enabled="false"
+        android:textColor="@color/btn_textcolor"
+        android:onClick="showCodeMinitPay"/>
+
+    <Button
+        android:id="@+id/btn_balance"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:text="@string/balance"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:padding="10dp"
+        android:layout_margin="20dp"
+        android:background="@drawable/btn_minitpay_selector"
+        android:enabled="false"
+        android:textColor="@color/btn_textcolor"
+        android:onClick="balanceMinitPay"/>
+
+</LinearLayout>

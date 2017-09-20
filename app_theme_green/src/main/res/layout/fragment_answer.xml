@@ -1,0 +1,88 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primary">
+
+    <ImageView
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="100dp"
+        android:adjustViewBounds="true"
+        android:src="@drawable/user_icon"/>
+
+    <ImageView
+        android:id="@+id/answer_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop" />
+
+    <TextView
+        android:id="@+id/answer_wait_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/answer_name"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="@string/answer_text"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="15sp"/>
+
+    <TextView
+        android:id="@+id/answer_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:gravity="center"
+        android:text="Unknown Name"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="40sp"/>
+
+    <TextView
+        android:id="@+id/answer_number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:text="Unknown Number"
+        android:textColor="@color/secondary_txt_inverse"
+        android:textSize="30sp"
+        android:layout_below="@id/answer_name" />
+
+    <LinearLayout
+        android:id="@+id/answer_receiving_btns"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <TextView
+            android:id="@+id/answer_decline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="10dp"
+            android:gravity="center"
+            android:text="Decline"
+            android:textSize="25sp"
+            android:textColor="@color/primary_txt_inverse"
+            android:background="#F44336"/>
+
+        <TextView
+            android:id="@+id/answer_accept"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="10dp"
+            android:gravity="center"
+            android:text="Accept"
+            android:textSize="25sp"
+            android:textColor="@color/primary_txt_inverse"
+            android:background="#4CAF50"/>
+    </LinearLayout>
+</RelativeLayout>

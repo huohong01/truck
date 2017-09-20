@@ -1,0 +1,129 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true"
+    android:background="@color/primary">
+
+    <RelativeLayout
+        android:id="@+id/video_main_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"/>
+
+    <ImageView
+        android:id="@+id/video_main_view_off_icon"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:padding="3dp"
+        android:adjustViewBounds="true"
+        android:src="@drawable/user_icon"
+        android:clickable="false"
+        android:visibility="invisible"/>
+
+    <RelativeLayout
+        android:id="@+id/video_user_view"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="@dimen/video_gradient_size"
+        android:layout_marginEnd="15dp"
+        android:layout_alignParentEnd="true" />
+
+    <ImageView
+        android:id="@+id/video_user_view_off_icon"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/video_gradient_size"
+        android:layout_marginEnd="15dp"
+        android:layout_alignParentEnd="true"
+        android:adjustViewBounds="true"
+        android:src="@drawable/user_icon"
+        android:visibility="invisible"/>
+
+    <!-- Video Control Buttons -->
+    <LinearLayout
+        android:id="@+id/video_controls_wrapper"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal"
+        android:layout_marginBottom="35dp">
+
+        <!-- Mute Microphone button -->
+        <ImageView
+            android:id="@+id/video_mute"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@drawable/voice_button"/>
+
+        <!-- Show the Chat Window -->
+        <ImageView
+            android:id="@+id/video_show_chat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@drawable/chat_button"/>
+
+        <!-- Camera toggle -->
+        <ImageView
+            android:id="@+id/video_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@drawable/view_button"/>
+
+        <!-- Video End toggle -->
+        <ImageView
+            android:id="@+id/video_end"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@drawable/video_button"/>
+    </LinearLayout>
+
+    <!-- Top Gradient and Elapsed Time -->
+    <RelativeLayout
+        android:id="@+id/video_gradient"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/video_gradient_size"
+        android:background="@drawable/video_top_gradient">
+
+        <ImageView
+            android:id="@+id/video_switch_camera"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="25dp"
+            android:padding="10dp"
+            android:src="@drawable/cam_switch_icon" />
+
+        <TextView
+            android:id="@+id/video_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:textColor="@color/primary_txt_inverse"
+            android:textSize="@dimen/text_medium"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/video_progressbar_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ProgressBar
+            android:id="@+id/video_progressbar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:indeterminate="true"/>
+    </RelativeLayout>
+
+    <FrameLayout
+        android:id="@+id/video_fragment_holder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</RelativeLayout>

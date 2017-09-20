@@ -1,0 +1,119 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:actionOverflowButtonStyle">@style/MyActionButtonOverflow</item>
+
+        <item name="android:popupMenuStyle">@style/PopupMenu</item>
+        <item name="android:actionMenuTextColor">@color/primary_txt</item>
+        <item name="android:textAppearanceLargePopupMenu">@style/PopupTextStyleLarge</item>
+        <item name="android:textAppearanceSmallPopupMenu">@style/PopupTextStyleSmall</item>
+
+        <item name="android:textColorPrimary">@color/primary_txt</item>
+        <item name="android:textColorPrimaryInverse">@color/secondary_txt_inverse</item>
+        <item name="android:textColorSecondary">@color/secondary_txt</item>
+        <item name="android:textColorSecondaryInverse">@color/secondary_txt_inverse</item>
+        <item name="android:textColorHint">@color/secondary_txt_inverse</item>
+        
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/primary_accent</item>
+        <item name="android:colorAccent">@color/primary_accent</item>
+        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:navigationBarColor">@color/primary_dark</item>
+        <item name="drawerArrowStyle">@style/MyDrawerArrowToggle</item>
+
+
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:colorBackground">@color/primary</item>
+        <item name="android:colorForeground">@color/primary</item>
+    </style>
+
+
+    <style name="SoundRecorderTheme" parent="AppTheme">
+        <item name="android:colorAccent">@color/sound_recorder_accent</item>
+        <item name="colorAccent">@color/primary_accent</item>
+    </style>
+
+
+    <style name="EditTextLabel" parent="AppTheme">
+        <!-- Hint color and label color in FALSE state -->
+        <item name="android:textColorHint">@color/primary_txt_inverse</item>
+        <item name="android:textSize">@dimen/text_small_medium</item>
+        <!-- Label color in TRUE state and bar color FALSE and TRUE State -->
+        <item name="colorAccent">@color/primary_accent</item>
+        <item name="colorControlNormal">@color/primary_dark</item>
+        <item name="colorControlActivated">@color/primary_txt_inverse</item>
+    </style>
+
+    <style name="EditTextLabelInverse" parent="EditTextLabel">
+        <item name="colorAccent">@color/primary_txt_inverse</item>
+        <item name="colorControlNormal">@color/primary_txt_inverse</item>
+    </style>
+
+
+    <style name="MyDrawerArrowToggle" parent="Widget.AppCompat.DrawerArrowToggle">
+        <item name="color">@color/bgGray</item>
+    </style>
+
+    <style name="MyToolbar">
+        <item name="android:textColorPrimaryInverse">@color/primary_dark</item>
+        <item name="android:textColorSecondary">@color/primary_dark</item>
+        <item name="android:textColorSecondaryInverse">@color/primary_dark</item>
+        <item name="android:textColorHint">@color/primary_dark</item>
+
+        <item name="android:windowBackground">@color/primary_dark</item>
+        <item name="android:colorBackground">@color/primary_dark</item>
+        <item name="android:colorForeground">@color/primary_dark</item>
+    </style>
+
+
+//--------------------------------------------------------------------------------------------------
+
+    <style name="ActionMenu" parent="@style/Widget.AppCompat.PopupMenu">
+        <item name="android:textColor">@color/primary_txt_inverse</item>
+        <item name="android:popupBackground">@color/popupBackground_color</item>
+        <item name="android:background">@color/popupBackground_color</item>
+    </style>
+
+    <style name="PopupMenu" parent="@style/Widget.AppCompat.PopupMenu">
+        <item name="android:textColor">@color/secondary_txt_inverse</item>
+        <item name="android:popupBackground">@color/popupBackground_color</item>
+        <item name="android:background">@color/popupBackground_color</item>
+    </style>
+
+    <style name="PopupTextStyleLarge" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Large">
+        <item name="android:textColor">@color/primary_txt</item>
+    </style>
+
+    <style name="PopupTextStyleSmall" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Small">
+        <item name="android:textColor">@color/primary_txt</item>
+    </style>
+
+    <!--  check box style -->
+    <style name="CustomCheckbox" parent="AppTheme">
+        <item name="android:textColorSecondary">@color/holo_red_light</item>
+    </style>
+
+    <style name="MySwitch" parent="Theme.AppCompat.Light">
+        <!-- Active thumb color & Active track color(30% transparency)
+            switch 打开时的拇指按钮的颜色 轨迹颜色默认为30%这个颜色 -->
+        <item name="colorControlActivated">@color/theme_color_select</item>
+        <!-- Inactive thumb color switch关闭时的拇指按钮的颜色 -->
+        <item name="colorSwitchThumbNormal">@color/theme_color_unselect</item>
+        <!-- Inactive track color(30% transparency) switch关闭时的轨迹的颜色  30%这个颜色 -->
+        <item name="android:colorForeground">@color/theme_track_color</item>
+        <!--使用方法：
+        在布局文件中给需要自定义控件中增加app:theme="@style/MySwitch"-->
+    </style>
+
+    <!-- for toolbar option button-->
+    <style name="MyActionButtonOverflow" parent="android:style/Widget.Holo.Light.ActionButton.Overflow">
+        <item name="android:src">@drawable/menu_overflow</item>
+        <item name="android:color">@color/primary</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
+</resources>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:attr/selectableItemBackground">
+
+    <TextView
+        yuyong:yuyong_theme_type="textColor"
+        android:id="@+id/contact_alphabet_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_margin="15dp"
+        android:fontFamily="sans-serif-light"
+        android:text="D"
+        android:textColor="@color/primary_txt"
+        android:textSize="@dimen/alphabet_indicator_size" />
+
+    <TextView
+        android:id="@+id/contact_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="60dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/unknown"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_medium_large" />
+
+    <TextView
+        android:id="@+id/contact_registered_marker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@id/contact_name"
+        android:layout_above="@+id/contact_divider"
+        android:layout_marginBottom="5dp"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/registered"
+        android:textColor="@color/registered_marker"
+        android:textSize="@dimen/text_small" />
+
+    <ImageView
+        yuyong:yuyong_theme_type="src"
+        android:id="@+id/contact_avatar"
+        android:layout_width="@dimen/avatar_small"
+        android:layout_height="@dimen/avatar_small"
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="10dp"
+        android:src="@drawable/empty_avatar"/>
+
+    <TextView
+        android:id="@+id/contact_avatar_letter"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignStart="@+id/contact_avatar"
+        android:layout_alignTop="@+id/contact_avatar"
+        android:layout_alignEnd="@+id/contact_avatar"
+        android:layout_alignBottom="@+id/contact_avatar"
+        android:gravity="center"
+        android:textColor="@color/secondary_txt_inverse"
+        android:textSize="@dimen/text_large"/>
+
+    <ImageView
+        android:id="@+id/contact_fav_icon"
+        android:layout_width="@dimen/avatar_favorite_marker"
+        android:layout_height="@dimen/avatar_favorite_marker"
+        android:layout_alignStart="@+id/contact_avatar"
+        android:layout_alignBottom="@+id/contact_avatar"
+        android:layout_marginBottom="-5dp"
+        android:src="@drawable/favorite"/>
+
+    <View
+        yuyong:yuyong_theme_type="background_color"
+        android:id="@+id/contact_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_alignStart="@+id/contact_name"
+        android:layout_below="@+id/contact_avatar"
+        android:background="@color/primary" />
+</RelativeLayout>

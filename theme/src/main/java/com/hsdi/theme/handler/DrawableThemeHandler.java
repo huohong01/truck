@@ -1,0 +1,48 @@
+package com.hsdi.theme.handler;
+
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.View;
+
+import com.hsdi.theme.basic.ThemeLayoutInflaterFactory;
+
+/**
+ * Created by Yu Yong on 2017/8/8.
+ */
+
+public abstract class DrawableThemeHandler extends ThemeHandler {
+    public DrawableThemeHandler(View view, ThemeLayoutInflaterFactory.ThemeTypeValue value, AttributeSet attas) {
+        super(view, value, attas);
+    }
+
+    public DrawableThemeHandler(Object view, ThemeLayoutInflaterFactory.ThemeTypeValue value, AttributeSet attas) {
+        super(view, value, attas);
+    }
+
+    protected Drawable getDrawable(int drawable_id) {
+        Drawable originDrawable = mContext.get().getResources().getDrawable(drawable_id);
+        if (mRes == null) {
+            return originDrawable;
+        }
+        String resName = mContext.get().getResources().getResourceEntryName(drawable_id);
+        int new_drawable_id = -1;
+        try {
+            new_drawable_id = mRes.getIdentifier(resName, "mipmap", mResPkName);
+        } catch (Exception e) {
+            new_drawable_id = -1;
+        }
+        if (new_drawable_id <= 0)
+            new_drawable_id = mRes.getIdentifier(resName, "drawable", mResPkName);
+        Log.i("yuyong_get_img", "name-->" + resName + "from-->" + mContext.get().getClass().getName() + "-->" + drawable_id + "-->" + new_drawable_id);
+        Drawable new_drawable = null;
+        try {
+            new_drawable = mRes.getDrawable(new_drawable_id);
+        } catch (Resources.NotFoundException e) {
+            e.printStackTrace();
+            new_drawable = originDrawable;
+        }
+        return new_drawable;
+    }
+}

@@ -1,0 +1,23 @@
+package com.hsdi.theme.basic;
+
+import android.app.Fragment;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+/**
+ * Created by huohong.yi on 2017/8/25.
+ */
+
+public abstract class BaseFragment  extends Fragment {
+    private ThemeLayoutInflaterFactory mThemeFactory;
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mThemeFactory=new ThemeLayoutInflaterFactory();
+        inflater.setFactory(mThemeFactory);
+        return CreateView(inflater,container,savedInstanceState);
+    }
+
+    protected abstract View CreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState);
+}

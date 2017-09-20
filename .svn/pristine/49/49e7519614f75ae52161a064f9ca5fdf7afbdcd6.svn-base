@@ -1,0 +1,59 @@
+package com.hsdi.NetMe.ui.startup;
+
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.TextView;
+
+import com.hsdi.NetMe.R;
+import com.hsdi.theme.basic.BaseThemeActivity;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+import static com.hsdi.theme.basic.ThemeLayoutInflaterFactory.ThemeTypeValue.toolbar_nav_icon;
+
+public class VersionActivity extends BaseThemeActivity {
+
+    @Bind(R.id.version_toolbar)
+    Toolbar versionToolbar;
+
+    @Bind(R.id.version_code)
+    TextView versionCode;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_version);
+        ButterKnife.bind(this);
+
+        versionToolbar.setTitle("About NetMe");
+        setSupportActionBar(versionToolbar);
+        versionToolbar.setNavigationIcon(R.drawable.back);
+        applyTheme(versionToolbar,R.drawable.back,toolbar_nav_icon);
+        versionToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
+
+        String version = getVersion();
+        versionCode.setText(version);
+    }
+
+    public String getVersion() {
+
+        try {
+            PackageManager manager = this.getPackageManager();
+            PackageInfo packageInfo = manager.getPackageInfo(this.getPackageName(), 0);
+            String version = packageInfo.versionName;
+            return version;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+}

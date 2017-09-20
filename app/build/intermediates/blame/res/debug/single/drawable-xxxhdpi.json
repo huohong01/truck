@@ -1,0 +1,166 @@
+[
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\empty_avatar.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\empty_avatar.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\btn_edit_dwn.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\btn_edit_dwn.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\tabs_recent_selected.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\tabs_recent_selected.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\phone.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\phone.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\send_btn.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\send_btn.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\drawer_icon.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\drawer_icon.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\tabs_contacts_selected.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\tabs_contacts_selected.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\sync.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\sync.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\missed_call.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\missed_call.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\tabs_favorites.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\tabs_favorites.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\checkbox_unselect.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\checkbox_unselect.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\checkbox_select.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\checkbox_select.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\video.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\video.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\video_voice_red.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\video_voice_red.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\logo.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\logo.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\tabs_recent.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\tabs_recent.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\ic_navigate_next.png",
+        "source": "C:\\Users\\huohong.yi\\.android\\build-cache\\086a78280c10ab9608e317d6f010c47c7378c9b4\\output\\res\\drawable-xxxhdpi\\ic_navigate_next.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\username_icon.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\username_icon.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\group_avatar.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\group_avatar.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\switch_on.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\switch_on.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\ring_phone_200dp.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\generated\\res\\pngs\\debug\\drawable-xxxhdpi\\ring_phone_200dp.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\chat_bubble_sent.9.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\chat_bubble_sent.9.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\back.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\back.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\btn_edit_up.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\btn_edit_up.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\camera.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\camera.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\message.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\message.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\favorite.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\favorite.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\record.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\record.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\voice.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\voice.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\video_voice_green.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\video_voice_green.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\tabs_contacts.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\tabs_contacts.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\add.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\add.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\empty_avatar_user.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\empty_avatar_user.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\drawer_bg.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\drawer_bg.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\search.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\search.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\password_icon.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\password_icon.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\tabs_messages.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\tabs_messages.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\mail.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\mail.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\tabs_favorites_selected.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\tabs_favorites_selected.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\switch_close.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\switch_close.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxxhdpi\\tabs_messages_selected.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\drawable-xxxhdpi\\tabs_messages_selected.png"
+    }
+]

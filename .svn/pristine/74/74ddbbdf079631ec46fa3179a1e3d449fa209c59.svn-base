@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.percent.PercentRelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <!-- Avatar layout -->
+    <android.support.percent.PercentRelativeLayout
+        android:id="@+id/avatar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_heightPercent="50%">
+
+        <ImageView
+            android:id="@+id/details_avatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@color/primary"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_heightPercent="27%"
+            android:layout_alignParentTop="true"
+            android:background="@drawable/top_gradient"/>
+
+        <View
+            android:id="@+id/details_bottom_gradient"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_heightPercent="27%"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/bottom_gradient"/>
+
+        <TextView
+            android:id="@+id/details_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/text_large"
+            android:layout_centerHorizontal="true"
+            android:layout_alignTop="@id/details_bottom_gradient"
+            android:layout_marginTop="15dp"/>
+    </android.support.percent.PercentRelativeLayout>
+
+    <!--  Phones and Emails list -->
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/details_phones_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/avatar_layout"
+        android:layout_above="@+id/details_favorites_btn"
+        android:paddingTop="25dp"
+        android:divider="@android:color/transparent" />
+
+    <Button
+        yuyong:yuyong_theme_type="background_color"
+        android:id="@+id/details_favorites_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:textSize="@dimen/text_medium"
+        android:textColor="@color/secondary_txt_inverse"
+        android:background="@color/primary_dark"
+        android:onClick="onFavoriteClicked"/>
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/details_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent" />
+</android.support.percent.PercentRelativeLayout>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    android:layout_gravity="center">
+
+    <ImageView
+        android:id="@+id/interrupt_alert_avatar"
+        android:layout_width="@dimen/avatar_small"
+        android:layout_height="@dimen/avatar_small"
+        android:layout_alignParentStart="true"
+        android:layout_marginEnd="10dp"
+        android:layout_marginStart="10dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/empty_avatar"/>
+
+    <TextView
+        android:id="@+id/interrupt_alert_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/interrupt_alert_avatar"
+        android:layout_toStartOf="@+id/interrupt_alert_time"
+        android:layout_toEndOf="@id/interrupt_alert_avatar"
+        android:textColor="@color/primary_txt"/>
+
+    <TextView
+        android:id="@+id/interrupt_alert_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/interrupt_alert_avatar"
+        android:layout_toStartOf="@+id/interrupt_alert_time"
+        android:layout_toEndOf="@id/interrupt_alert_avatar"
+        android:layout_below="@id/interrupt_alert_name"
+        android:textColor="@color/secondary_txt"/>
+
+    <TextView
+        android:id="@+id/interrupt_alert_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignTop="@id/interrupt_alert_avatar"
+        android:layout_marginEnd="10dp"
+        android:textColor="@color/secondary_txt"/>
+</RelativeLayout>

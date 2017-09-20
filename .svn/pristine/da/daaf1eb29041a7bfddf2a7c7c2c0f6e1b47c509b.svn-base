@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/menu_search"
+        android:title="@string/search"
+        android:icon="@drawable/search"
+        android:orderInCategory="1"
+        app:actionViewClass="android.support.v7.widget.SearchView"
+        app:showAsAction="collapseActionView|ifRoom"/>
+
+    <item android:id="@+id/menu_item_add_msg"
+        android:title="@string/new_message"
+        android:icon="@drawable/add"
+        android:orderInCategory="2"
+        app:showAsAction="ifRoom" />
+
+</menu>

@@ -1,0 +1,79 @@
+package com.hsdi.theme.handler;
+
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.view.View;
+
+import com.hsdi.theme.basic.ThemeLayoutInflaterFactory;
+import com.hsdi.theme.basic.ThemeManager;
+
+import java.io.File;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
+
+/**
+ * Created by Yu Yong on 2017/8/8.
+ */
+
+public abstract class ThemeHandler {
+
+    protected WeakReference<View> mView;
+    protected WeakReference<Object> oView;
+    protected ThemeLayoutInflaterFactory.ThemeTypeValue mValue;
+    protected WeakReference<AttributeSet> mAttas;
+
+    protected String mResPkName;
+    protected Resources mRes;
+    protected WeakReference<Context> mContext;
+
+    protected ThemeHandler() {
+        mValue = null;
+        mView = null;
+        mAttas = null;
+    }
+
+    protected ThemeHandler(View view, ThemeLayoutInflaterFactory.ThemeTypeValue value, AttributeSet attas) {
+        mValue = value;
+        mView = new WeakReference<View>(view);
+        mAttas = new WeakReference<AttributeSet>(attas);
+    }
+
+    protected ThemeHandler(Object view, ThemeLayoutInflaterFactory.ThemeTypeValue value, AttributeSet attas) {
+        mValue = value;
+        oView = new WeakReference<Object>(view);
+        mAttas = new WeakReference<AttributeSet>(attas);
+    }
+
+    public void init(Context context) {
+        mContext = new WeakReference<Context>(context);
+        File res_pkg = new File(ThemeManager.getResFile(ThemeManager.getCurrentTheme()));
+        PackageManager mPm = context.getPackageManager();
+        PackageInfo mInfo = mPm.getPackageArchiveInfo(res_pkg.getAbsolutePath(), PackageManager.GET_ACTIVITIES);
+        if (mInfo == null)
+            return;
+        mResPkName = mInfo.packageName;
+        AssetManager assetManager = null;
+        try {
+            assetManager = AssetManager.class.newInstance();
+            Method addAssetPath = assetManager.getClass().getMethod("addAssetPath", String.class);
+            addAssetPath.invoke(assetManager, res_pkg.getAbsolutePath());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        DisplayMetrics disp = context.getResources().getDisplayMetrics();
+        Configuration config = context.getResources().getConfiguration();
+        mRes = new Resources(assetManager, disp, config);
+    }
+
+    public abstract void doHandler();
+
+    public void doHandler(int id) {
+        return;
+    }
+}

@@ -1,0 +1,248 @@
+package com.hsdi.NetMe.ui.chat.text.helper_activities;
+
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.hsdi.NetMe.BaseActivity;
+import com.hsdi.NetMe.R;
+
+/**
+ * shows the user a map with with a marker to they can select a location to sent in a message
+ * */
+public class MapActivity extends BaseActivity implements OnMapReadyCallback {
+    private static final String TAG = "MapActivity";
+    public static final String EXTRA_LAT_LNG = "extra_lat_lng";
+
+    private static final int REQUEST_CODE_PERMISSION = 44;
+    private static boolean initialPermissionRequest = true;
+
+    // views
+    private ProgressDialog progressDialog;
+
+    // Map variables
+    private GoogleApiClient mGoogleApiClient;
+    private GoogleMap googleMap;
+    private Marker marker;
+    private boolean sendingEnabled = false;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_map);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.send_map_toolbar);
+        toolbar.setTitle("");
+        setSupportActionBar(toolbar);
+        toolbar.setNavigationIcon(R.drawable.back);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        showLoadingDialog();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_map, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.menu_map_send && !progressDialog.isShowing()){
+            onSendClicked();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if(initialPermissionRequest && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(
+                    MapActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_CODE_PERMISSION
+            );
+        }
+        else if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            finish();
+        }
+        else setupMap();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mGoogleApiClient != null) mGoogleApiClient.disconnect();
+
+        super.onDestroy();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        initialPermissionRequest = false;
+    }
+
+    @Override
+    public void onMapReady(final GoogleMap googleMap) {
+        if (progressDialog != null) progressDialog.dismiss();
+
+        this.googleMap = googleMap;
+
+        googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                if (marker == null) marker = addMarker(latLng);
+                else marker.setPosition(latLng);
+            }
+        });
+
+        googleMap.getUiSettings().setMapToolbarEnabled(false);
+
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            googleMap.setMyLocationEnabled(true);
+        }
+
+        buildGoogleApiClient();
+    }
+
+    /**
+     * Button method for the send location action
+     * gets the current coordinates of where the pin is and sets them as the result for this activity
+     * */
+    public void onSendClicked() {
+        if (marker != null && sendingEnabled) {
+            Intent data = new Intent();
+            data.putExtra(EXTRA_LAT_LNG, marker.getPosition());
+            setResult(RESULT_OK, data);
+            finish();
+        }
+    }
+
+    /**
+     * Initializes the map
+     * */
+    private void setupMap() {
+        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.view_location_map);
+        mapFragment.getMapAsync(this);
+    }
+
+    private synchronized void buildGoogleApiClient() {
+        Log.d(TAG, "buildGoogleApiClient()");
+
+        mGoogleApiClient = new GoogleApiClient.Builder(getApplicationContext())
+                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                    @Override
+                    public void onConnected(Bundle bundle) {
+                        Location lastLocation = null;
+
+                        if(ContextCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+                            lastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+                        if (lastLocation != null) {
+                            LatLng latLng = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+                            showMyLocation(latLng);
+                            marker = addMarker(latLng);
+                        }
+                    }
+
+                    @Override
+                    public void onConnectionSuspended(int i) {
+                    }
+                })
+                .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
+                    @Override
+                    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+                    }
+                })
+                .addApi(LocationServices.API)
+                .build();
+
+        mGoogleApiClient.connect();
+    }
+
+    /**
+     * sets the location of the map to the user's current gps location
+     * */
+    private void showMyLocation(LatLng latLng) {
+        if (latLng != null && googleMap != null) {
+
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(latLng)             // Sets the center of the map to location user
+                    .zoom(17)                   // Sets the zoom
+                    .bearing(0)                 // Sets the orientation of the camera to north
+                    .tilt(40)                   // Sets the tilt of the camera to 40 degrees
+                    .build();                   // Creates a CameraPosition from the builder
+
+            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        }
+    }
+
+    /**
+     * places the marker at the device's current location
+     * */
+    private Marker addMarker(LatLng latLng) {
+        if (latLng != null && googleMap != null) {
+            sendingEnabled = true;
+
+            MarkerOptions options = new MarkerOptions()
+                    .position(latLng)
+                    .title(getString(R.string.maps_marker_title))
+                    .draggable(true);
+
+            return googleMap.addMarker(options);
+        }
+
+        return null;
+    }
+
+    /**
+     * generates a progress dialog to let the user know that the map is still being initialized
+     * */
+    private void showLoadingDialog() {
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage(getString(R.string.please_wait));
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.setCancelable(true);
+        progressDialog.setIndeterminate(true);
+        progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                finish();
+            }
+        });
+
+        progressDialog.show();
+    }
+}

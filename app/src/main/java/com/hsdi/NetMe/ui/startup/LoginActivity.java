@@ -1,0 +1,305 @@
+package com.hsdi.NetMe.ui.startup;
+
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.TextInputEditText;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.ImageView;
+
+import com.hsdi.NetMe.BaseActivity;
+import com.hsdi.NetMe.NetMeApp;
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.database.DatabaseHelper;
+import com.hsdi.NetMe.models.response_models.AccountResponse;
+import com.hsdi.NetMe.models.response_models.BaseResponse;
+import com.hsdi.NetMe.network.RestServiceGen;
+import com.hsdi.NetMe.ui.main.MainActivity;
+import com.hsdi.NetMe.util.DeviceUtils;
+import com.hsdi.NetMe.util.DialogUtils;
+import com.hsdi.NetMe.util.PhoneUtils;
+import com.hsdi.NetMe.util.PreferenceManager;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class LoginActivity extends BaseActivity {
+
+    @Bind(R.id.login_username)
+    TextInputEditText usernameTV;
+    @Bind(R.id.login_password)
+    TextInputEditText passwordET;
+    @Bind(R.id.login_remember_me)
+    CheckBox rememberMe;
+    @Bind(R.id.login_clear)
+    ImageView loginClear;
+
+
+    private PreferenceManager manager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login);
+        ButterKnife.bind(this);
+
+        manager = PreferenceManager.getInstance(this);
+        //methodRequiresPermissions();
+        // if the user had previously logged in with remember me set, just
+        // "auto sign in" (just skip to the main message activity)
+        // if(manager.userLoginRemembered()) goToMain();
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // get the username/phone number
+        String username = NetMeApp.getCurrentUser();
+        String phoneNumber = manager.getCountryCallingCode() + manager.getPhoneNumber();
+        boolean isCurrentUser = username.equals(phoneNumber);
+        Log.i("yuyong_phone", String.format("onResume:--------->%s--------->%S--------->%s--------->%s", manager.getCountryCode(), username, phoneNumber, username.equals(phoneNumber)));
+        // if the username is empty, go back to the phone retrieval activity to get it. If everything is working correctly, this shouldn't happen
+        if (username == null || username.isEmpty() || !isCurrentUser) {
+            Intent verifyUserIntent = new Intent(this, PhoneRetrievalActivity.class);
+            startActivity(verifyUserIntent);
+            finish();
+        }
+        // if the username is good, set it. This should be what always happens
+        else {
+            String formattedNumber = PhoneUtils.formatPhoneNumber(this, username);
+            usernameTV.setText(formattedNumber == null ? username : formattedNumber);
+            Log.i("yuyong_phone", String.format("onResume: --->%s--->%s", username, formattedNumber));
+        }
+        Log.i("yuyong_phone", String.format("onResume: %s--->%s", manager.userLoginRemembered(), manager.getPassword()));
+
+        if (manager.userLoginRemembered()) {
+            passwordET.setText(manager.getPassword());
+            rememberMe.setChecked(true);
+        }
+        rememberMe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (rememberMe.isChecked()) {
+                    Log.i("yuyong_phone", "onResume:true ");
+                } else {
+                    manager.removeRemenberMe();
+                    Log.i("yuyong_phone", "onResume:false ");
+                }
+
+            }
+        });
+
+        loginClear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("yuyong_phone", "onClick: clear");
+                clearUserRequest();
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // reattempt to perform the login. this will check permissions again to make sure
+        // everything is good
+        onLoginClicked(null);
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * checks if the needed permission have been granted
+     */
+    private boolean checkPermissions() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * attempts to sign in the user using the passed password
+     *
+     * @param password the checked password
+     */
+    private void performLoginRequest(final String password) {
+        final ProgressDialog progressDialog = DialogUtils.getProgressDialog(this);
+        progressDialog.show();
+
+        // starting the login request
+        RestServiceGen.getUnCachedService()
+                .userLogin(
+                        manager.getCountryCallingCode(),
+                        manager.getPhoneNumber(),
+                        password,
+                        manager.getGCMRegistrationId(),
+                        DeviceUtils.getDeviceId(this),
+                        DeviceUtils.getAppVersion(this),
+                        DeviceUtils.getPlatformVersion()
+                )
+                .enqueue(new Callback<AccountResponse>() {
+                    @Override
+                    public void onResponse(Call<AccountResponse> call, Response<AccountResponse> response) {
+                        // if the response was good
+                        if (response != null && response.body() != null && response.body().isSuccess()) {
+                            onLoginSuccess(response.body());
+                        }
+                        // if the response was bad, show an error
+                        else if (response != null && response.body() != null) {
+                            String errorMsg = response.body().getErrorMsg();
+                            String message = errorMsg == null ? LoginActivity.this.getString(R.string.error_login) : errorMsg;
+
+                            DialogUtils.getErrorDialog(LoginActivity.this, message).show();
+                        }
+                        //bad response, if here, assume there was a network connection issue so show a connection error
+                        else {
+                            DialogUtils.getErrorDialog(LoginActivity.this, R.string.error_connection).show();
+                        }
+
+                        // progress dialog no longer needed
+                        if (progressDialog != null) progressDialog.dismiss();
+                    }
+
+                    @Override
+                    public void onFailure(Call<AccountResponse> call, Throwable t) {
+                        Log.e("loginActivity", "in Login onFailure: throwable msg = " + t.getMessage() + " -|- local msg = " + t.getLocalizedMessage());
+                        t.printStackTrace();
+
+                        // progress dialog no longer needed
+                        if (progressDialog != null) progressDialog.dismiss();
+
+                        // if here, assume there was a network connection issue so show a connection error
+                        DialogUtils.getErrorDialog(LoginActivity.this, R.string.error_connection).show();
+                    }
+                });
+    }
+
+    /**
+     * Called if the attempt to login returned successful.
+     * This saves all user params and continues to the main activity
+     *
+     * @param response the login response
+     */
+    private void onLoginSuccess(AccountResponse response) {
+        // setting that the user has been logged in to skip login in the future
+        if (rememberMe.isChecked()) {
+            manager.setRememberUser();
+        } else {
+            manager.removeRemenberMe();
+        }
+
+        // set the global logged in status; used by the gcm receiver to know when to show notifications
+        NetMeApp.setCurrentUserLoggedInStatus(true);
+        manager.setLoginStatus(true);
+
+        // storing all needed user params
+        manager.setPassword(passwordET.getText().toString().trim());
+        manager.setFirstName(response.getFirstName());
+        manager.setLastName(response.getLastName());
+        manager.setEmail(response.getEmail());
+        manager.setAvatarUrl(response.getAvatarUrl());
+        Log.i("yuyong_LoginActivity", String.format("onLoginSuccess: --->%s--->%s--->%s", rememberMe.isChecked(), manager.getPassword(), manager.userLoginRemembered()));
+        goToMain();
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * performs all needed login requirement checks and attempts to sign in the user or display an error
+     */
+    public void onLoginClicked(View view) {
+        String password = passwordET.getText().toString();
+
+        // checking permissions, if any required has not been granted, request it
+        if (checkPermissions()) {
+            DialogUtils.requestPermissionDialog(
+                    this,
+                    R.string.permission_basic_required_rationale,
+                    new String[]{
+                            Manifest.permission.READ_PHONE_STATE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    },
+                    0
+            ).show();
+        }
+        // if the password is not empty, assume valid, then request to be logged in
+        else if (!password.trim().isEmpty()) performLoginRequest(password.trim());
+            // otherwise the password is considered invalid and an error message in shown
+        else passwordET.setError(this.getString(R.string.password_required));
+    }
+
+    /**
+     * shows the account recovery activity
+     */
+    public void onForgotClicked(View view) {
+        Intent recoveryIntent = new Intent(this, AccountRecoveryActivity.class);
+        startActivity(recoveryIntent);
+    }
+
+    /**
+     * shows the account registration activity
+     */
+    public void onRegisterClicked(View view) {
+        clearUserRequest();
+    }
+
+    /**
+     * goes to the main activity
+     */
+    private void goToMain() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        this.finish();
+    }
+
+    private void clearUserRequest() {
+        final ProgressDialog progressDialog = DialogUtils.getProgressDialog(LoginActivity.this);
+        progressDialog.show();
+
+        RestServiceGen.getUnCachedService()
+                .userLogout(
+                        manager.getCountryCallingCode(),
+                        manager.getPhoneNumber(),
+                        manager.getPassword(),
+                        manager.getGCMRegistrationId(),
+                        DeviceUtils.getDeviceId(this),
+                        DeviceUtils.getAppVersion(this),
+                        DeviceUtils.getPlatformVersion()
+                )
+                .enqueue(new Callback<BaseResponse>() {
+                    @Override
+                    public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                        DatabaseHelper.logoutDatabase(LoginActivity.this);
+                        manager.switchUsers();
+                        NetMeApp.resetCurrentStaticUser();
+
+                        progressDialog.dismiss();
+                        // starting the phone verification activity before closing this activity
+                        Intent intent = new Intent(LoginActivity.this, PhoneRetrievalActivity.class);
+                        startActivity(intent);
+                        LoginActivity.this.finish();
+                    }
+
+                    @Override
+                    public void onFailure(Call<BaseResponse> call, Throwable t) {
+                        // if here assume connection error
+                        DialogUtils.getErrorDialog(LoginActivity.this, R.string.error_connection).show();
+                    }
+                });
+    }
+
+}

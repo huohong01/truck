@@ -1,0 +1,1 @@
+copy /y F:\work\dailyWork\20170821\NetMe\app_theme_green\build\outputs\apk\app_theme_green-debug.apk F:\work\dailyWork\20170821\NetMe\app\src\main\assets\THEME\GREEN

@@ -1,0 +1,101 @@
+package com.hsdi.NetMe.ui.chat.text.helper_activities;
+
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.View;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.hsdi.NetMe.BaseActivity;
+import com.hsdi.NetMe.R;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+public class ViewLocationActivity extends BaseActivity implements OnMapReadyCallback {
+    public static final String EXTRA_LATLNG = "latlng";
+
+    // Widgets
+    private ProgressDialog progressDialog;
+    private MapFragment mapFragment;
+    @Bind(R.id.view_local_toolbar)public Toolbar    toolbar;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_view_location);
+        ButterKnife.bind(this);
+
+        toolbar.setTitle("");
+        setSupportActionBar(toolbar);
+        toolbar.setNavigationIcon(R.drawable.back);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        showLoadingDialog();
+        setupMap();
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        if (progressDialog != null) progressDialog.dismiss();
+
+        googleMap.getUiSettings().setMapToolbarEnabled(true);
+        googleMap.setMyLocationEnabled(true);
+        showMarker(googleMap);
+    }
+
+    private void showMarker(GoogleMap googleMap) {
+        LatLng latLng = getIntent().getParcelableExtra(EXTRA_LATLNG);
+        if (latLng != null) {
+            // Move camera
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(latLng)
+                    .zoom(17)
+                    .bearing(0)
+                    .tilt(0)
+                    .build();
+            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 1, null);
+
+            // Add marker
+            MarkerOptions options = new MarkerOptions()
+                    .position(latLng)
+                    .draggable(true);
+            googleMap.addMarker(options);
+        }
+    }
+
+    private void showLoadingDialog() {
+        progressDialog = new ProgressDialog(this, ProgressDialog.THEME_HOLO_DARK);
+        progressDialog.setMessage(getString(R.string.please_wait));
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.setCancelable(true);
+        progressDialog.setIndeterminate(true);
+        progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                finish();
+            }
+        });
+
+        progressDialog.show();
+    }
+
+    private void setupMap() {
+        mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.view_location_map);
+        mapFragment.getMapAsync(this);
+    }
+}

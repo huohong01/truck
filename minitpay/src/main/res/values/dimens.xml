@@ -1,0 +1,26 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="padding_5dp">5dp</dimen>
+    <dimen name="padding_10dp">10dp</dimen>
+    <dimen name="padding_20dp">20dp</dimen>
+    <dimen name="padding_30dp">30dp</dimen>
+    <dimen name="padding_40dp">40dp</dimen>
+    <dimen name="padding_70dp">90dp</dimen>
+    <dimen name="padding_15dp">15dp</dimen>
+
+
+    <dimen name="loginFontSize">24sp</dimen>
+    <dimen name="smallFontSize">16sp</dimen>
+    <dimen name="verySmallFontSize">12sp</dimen>
+    <dimen name="buttonFontSize">26sp</dimen>
+    <dimen name="mediumFontSize">26sp</dimen>
+
+    <dimen name="tabFontSize">15sp</dimen>
+
+    <dimen name="composeDialogTitle">22sp</dimen>
+
+    <dimen name="newMessageDialogTextSize">18sp</dimen>
+</resources>

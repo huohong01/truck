@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/chat_drawer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background">
+
+        <!-- The main content view -->
+        <RelativeLayout
+            android:id="@+id/chat_rl_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fitsSystemWindows="true">
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/chat_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/primary"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/chat_toolbar_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:textColor="@color/primary_txt_inverse"
+                    android:text="jeejjej"
+                    android:textSize="20sp"/>
+                <ImageView
+                    android:id="@+id/chat_toolbar_typing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:src="@drawable/animation_red_green"
+                    android:layout_gravity="right"
+                    android:visibility="gone"
+                    />
+            </android.support.v7.widget.Toolbar>
+
+            <ProgressBar
+                android:id="@+id/chat_loading_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/chat_toolbar"
+                android:indeterminate="true"
+                android:visibility="gone"
+                style="?android:attr/progressBarStyleHorizontal"/>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/chat_message_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/chat_loading_bar"
+                android:layout_above="@+id/chat_media_review"
+                android:background="@color/background"/>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/chat_media_review"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_above="@+id/chat_entry_fields"
+                android:background="@color/pending_media_field"/>
+
+            <LinearLayout
+                android:id="@+id/chat_entry_fields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:padding="5dp"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                >
+                <TextView
+                    android:id="@+id/chat_typing"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="djdjjdjd"
+                    android:layout_marginLeft="10dp"
+                    android:visibility="gone"/>
+
+                <LinearLayout
+                    yuyong:yuyong_theme_type="background_color"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:background="@color/primary"
+                    >
+                <ImageView
+                    yuyong:yuyong_theme_type="src"
+                    android:id="@+id/chat_attach_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/attach"
+                    android:background="@android:color/transparent"/>
+                <!-- input text -->
+                <EditText
+                    android:id="@+id/chat_message_entry"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:padding="10dp"
+                    android:maxLines="5"
+                    android:hint="@string/enter_message"
+                    android:textColorHint="@color/primary_txt"
+                    android:textColor="@color/primary_txt_inverse"
+                    android:textCursorDrawable="@null"
+                    android:textSize="20sp"
+                    android:inputType="textCapSentences|textAutoCorrect|textMultiLine"/>
+
+                <ImageView
+                    yuyong:yuyong_theme_type="src"
+                    android:id="@+id/chat_send_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="35dp"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/send_btn"/>
+            </LinearLayout>
+            </LinearLayout>
+        </RelativeLayout>
+
+        <!-- The navigation drawer -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:orientation="vertical"
+            android:clickable="true"
+            android:background="@color/background"
+            android:fitsSystemWindows="true">
+
+            <ImageView
+                yuyong:yuyong_theme_type="src"
+                android:id="@+id/chat_close_drawer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:tint="@color/primary_dark"
+                android:layout_margin="15dp"
+                android:src="@drawable/close_icon"/>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/chat_participants"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="10dp"/>
+        </LinearLayout>
+    </android.support.v4.widget.DrawerLayout>
+</FrameLayout>

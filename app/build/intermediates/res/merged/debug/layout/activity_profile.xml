@@ -1,0 +1,141 @@
+<android.support.percent.PercentRelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <android.support.percent.PercentRelativeLayout
+        android:id="@+id/avatar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_heightPercent="50%">
+
+        <!-- avatar -->
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/empty_avatar"
+            android:background="@color/primary"/>
+
+        <ImageView
+            android:id="@+id/profile_avatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_alignParentTop="true"
+            android:background="@drawable/top_gradient"
+            app:layout_heightPercent="27%" />
+
+        <View
+            android:id="@+id/details_bottom_gradient"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/bottom_gradient"
+            app:layout_heightPercent="27%" />
+
+
+        <!-- Edit button -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:onClick="onAvatarClicked">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#88212121" />
+
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:src="@drawable/camera" />
+        </FrameLayout>
+    </android.support.percent.PercentRelativeLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/text_input_first_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/avatar_layout"
+        android:layout_marginBottom="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="25dp"
+        android:textColorHint="@color/primary">
+
+        <android.support.design.widget.TextInputEditText
+            android:id="@+id/edit_text_first_name"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="@string/first_name"
+            android:textColor="#212121"
+            android:inputType="textPersonName|textCapWords"/>
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/text_input_last_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_input_first_layout"
+        android:layout_marginBottom="25dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:textColorHint="@color/primary">
+
+        <android.support.design.widget.TextInputEditText
+            android:id="@+id/edit_text_last_name"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="@string/last_name"
+            android:textColor="#212121"
+            android:inputType="textPersonName|textCapWords"/>
+    </android.support.design.widget.TextInputLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@id/text_input_last_layout">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="30dp"
+            android:padding="10dp"
+            android:text="@string/save"
+            android:textColor="@color/primary_txt_inverse"
+            android:background="@color/btn_green"
+            android:onClick="onSaveClicked"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="30dp"
+            android:padding="10dp"
+            android:text="@string/cancel"
+            android:textColor="@color/primary_txt_inverse"
+            android:background="@color/btn_red"
+            android:onClick="onCancelClicked"/>
+    </LinearLayout>
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/profile_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"/>
+</android.support.percent.PercentRelativeLayout>

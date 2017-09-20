@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="3dp">
+
+    <ImageView
+        yuyong:yuyong_theme_type="src"
+        android:id="@+id/item_start_avatar"
+        android:layout_width="@dimen/avatar_small"
+        android:layout_height="@dimen/avatar_small"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_margin="5dp"
+        android:adjustViewBounds="true"
+        android:clickable="false"
+        android:src="@drawable/empty_avatar"/>
+
+    <TextView
+        android:id="@+id/item_start_avatar_letter"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignStart="@+id/item_start_avatar"
+        android:layout_alignTop="@+id/item_start_avatar"
+        android:layout_alignEnd="@+id/item_start_avatar"
+        android:layout_alignBottom="@+id/item_start_avatar"
+        android:gravity="center"
+        android:textColor="@color/secondary_txt_inverse"
+        android:textSize="@dimen/text_large"/>
+
+    <TextView
+        android:id="@+id/item_start_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@id/item_start_avatar"
+        android:layout_marginStart="5dp"
+        android:clickable="false"
+        android:singleLine="true"
+        android:textColor="@color/primary_txt"
+        android:textSize="20sp"/>
+
+    <CheckBox
+        android:id="@+id/item_start_checkBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
+        android:clickable="false"
+        android:button="@drawable/checkbox_selector"
+        yuyong:yuyong_theme_type="btn_color_state_list"
+        android:layout_marginRight="10dp"
+        />
+</RelativeLayout>

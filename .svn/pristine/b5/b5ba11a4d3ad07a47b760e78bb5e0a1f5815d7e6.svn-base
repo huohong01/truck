@@ -1,0 +1,28 @@
+<resources>
+    <!-- avatars -->
+    <dimen name="avatar_small">50dp</dimen>
+    <dimen name="avatar_large">100dp</dimen>
+    <dimen name="avatar_drawer">80dp</dimen>
+    <dimen name="avatar_favorite_marker">18dp</dimen>
+
+
+    <!-- Text Sizes -->
+    <dimen name="text_small">12sp</dimen>
+    <dimen name="text_small_medium">14sp</dimen>
+    <dimen name="text_medium">16sp</dimen>
+    <dimen name="text_medium_large">18sp</dimen>
+    <dimen name="text_large">24sp</dimen>
+    <dimen name="text_extra_large">32sp</dimen>
+    <dimen name="alphabet_indicator_size">30sp</dimen>
+
+    <!-- Chat Activity and Fragments -->
+    <dimen name="video_gradient_size">70dp</dimen>
+
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <dimen name="padding_10dp">10dp</dimen>
+    <dimen name="padding_20dp">20dp</dimen>
+    <dimen name="popmenu_width">100dp</dimen>
+</resources>

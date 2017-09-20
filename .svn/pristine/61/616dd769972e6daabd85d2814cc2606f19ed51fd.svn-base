@@ -1,0 +1,808 @@
+package com.hsdi.NetMe.ui.chat;
+
+import android.app.FragmentTransaction;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.hsdi.NetMe.NetMeApp;
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.models.Contact;
+import com.hsdi.NetMe.network.EndMeetingService;
+import com.hsdi.NetMe.ui.UnknownContactActivity;
+import com.hsdi.NetMe.ui.chat.audio.VoiceFragment;
+import com.hsdi.NetMe.ui.chat.text.TextFragment;
+import com.hsdi.NetMe.ui.chat.video.VideoFragment;
+import com.hsdi.NetMe.ui.main.MainActivity;
+import com.hsdi.NetMe.ui.startup.PhoneRetrievalActivity;
+import com.hsdi.NetMe.util.Constants;
+import com.hsdi.NetMe.util.DeviceUtils;
+import com.squareup.picasso.Picasso;
+
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+/**
+ * The Activity which controls all the video and and text chatting aspects. All the class in the
+ * com.macate.MBMView.UserInterface.ChatParts Package are in some way controlled by this avtivity or
+ * one it it's subsidiaries.
+ */
+public class ChatActivity extends AppCompatActivity implements ChatInterface {
+
+    private static final String TAG = "Chat";
+
+    public static final String EXTRA_CHAT_TYPE = "chat_type";
+    public static final String EXTRA_INVITED = "invitedUsers";
+    public static final String EXTRA_INVITED_NAME = "invitedName";
+    public static final String EXTRA_CHAT_ID = "chat_id";
+    public static final String EXTRA_MEETING_ID = "meetingId";
+    public static final String EXTRA_MEETING_TYPE = "meetingType";
+
+    public static final String TYPE_TEXT_ONLY = "textChat";
+    public static final String TYPE_START_VIDEO = "startChatCall";
+    public static final String TYPE_RING_VIDEO = "receivingChatCall";
+
+    public static final long TIME_OUT = 60000;
+    private boolean endCallCheck = true;
+    private TextFragment textFrag = null;
+    private VideoFragment videoFrag = null;
+    private VoiceFragment voiceFrag = null;
+    private int meetingType;
+
+    //some views
+    @Bind(R.id.chat_video_frag_container)
+    FrameLayout videoFragContainer;
+    @Bind(R.id.chat_text_frag_container)
+    FrameLayout textFragContainer;
+    @Bind(R.id.chat_hide_chat)
+    View hideTextBtn;
+    @Bind(R.id.chat_invisible_edit_text)
+    EditText invisibleET;
+
+    public Intent AAA;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_chat);
+        ButterKnife.bind(this);
+
+        Log.d(TAG, "on activity create");
+
+        AAA = getIntent();
+        onNewIntent(getIntent());
+    }
+
+    /**
+     * Gets the incoming intent and determines what needs to be shown to the user.
+     */
+    @Override
+    protected void onNewIntent(Intent incomingIntent) {
+        // Determining what to do
+        switch (incomingIntent.getStringExtra(EXTRA_CHAT_TYPE)) {
+            // only start the text fragment
+            case TYPE_TEXT_ONLY: {
+                Log.i(Constants.TAG_VIDEO, "onNewIntent:TYPE_TEXT_ONLY ");
+                if (startText(incomingIntent)) return;
+                else break;
+            }
+
+            // start a video and chat fragments to start a new video chat, video visible only at first
+            case TYPE_START_VIDEO: {
+                Log.i(Constants.TAG_VIDEO, "onNewIntent:TYPE_START_VIDEO ");
+                // try to start a video
+                if (startVideo(incomingIntent)) return;
+                    // something went wrong, just break out to the log and finish
+                else break;
+            }
+
+            // start a video and chat fragments to answer a new video chat, video visible only at first
+            case TYPE_RING_VIDEO: {
+                Log.i(Constants.TAG_VIDEO, "onNewIntent:TYPE_RING_VIDEO ");
+                // if there is already a video in progress and a new call comes in
+                if (videoFrag != null && videoFrag.getMeetingId() > -1) {
+                    Log.i(Constants.TAG_VIDEO, "onNewIntent:TYPE_RING_VIDEO ");
+                    showInterruptAndStartDismissTimer(incomingIntent);
+                    return;
+                } else if (voiceFrag != null && voiceFrag.getMeetingId() > -1) {
+                    Log.i(Constants.TAG_VOICE, "onNewIntent:TYPE_RING_VOICE ");
+                    showInterruptAndStartDismissTimer(incomingIntent);
+                    return;
+                }
+                // all else is good, just ring the video
+                else if (ringVideo(incomingIntent)) return;
+                    // something went wrong, just break out to the log and finish
+                else break;
+            }
+        }
+
+        // something crazy and unknown happened!!! just close out
+        Log.e(TAG, "unexpected intent\n" + Log.getStackTraceString(new Exception()));
+        Log.e(TAG, incomingIntent.getExtras().toString());
+        finish();
+    }
+
+    /**
+     * Finishes this activity. If there are any meetings in progress, alerts the user for
+     * confirmation to end everything and then takes care of ending any meetings in progress.
+     */
+    @Override
+    public void finish() {
+        Log.i(Constants.TAG_VIDEO, "finish: ");
+        if (endCallCheck && videoFrag != null && videoFrag.isVisible()) {
+            if (textFragContainer.getVisibility() == View.VISIBLE)
+                toggleFullScreen(true, Constants.MEETING_VIDEO);
+            else verifyUserWantsToEnd();
+
+            return;
+        }
+        if (endCallCheck && voiceFrag != null && voiceFrag.isVisible()) {
+            if (textFragContainer.getVisibility() == View.VISIBLE)
+                toggleFullScreen(true, Constants.MEETING_VOICE);
+            else verifyUserWantsToEnd();
+            return;
+        }
+
+        // end current meeting
+        clearAllViews();
+        alertServerEndMeeting();
+
+        // tell the app the the chat or call is ended
+        NetMeApp.resetMeetingTrackers();
+
+        // if the contact from this chat/call is not known to this user
+        String invited = getIntent().getStringExtra(EXTRA_INVITED);
+        if (invited != null && !invited.isEmpty()) {
+            Contact contact = NetMeApp.getContactWith(invited);
+            if (contact != null && contact.getId() <= -1) {
+                Intent intent = new Intent(this, UnknownContactActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.putExtra(UnknownContactActivity.EXTRA_CONTACT_OBJECT, contact);
+                startActivity(intent);
+            }
+        }
+
+        super.finish();
+    }
+
+    @Override
+    protected void onPause() {
+        Log.i(Constants.TAG_VIDEO, "onPause: ");
+        //allows other activities/services to know that chat is NOT in the foreground
+        NetMeApp.setChatVisible(false);
+
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        Log.i(Constants.TAG_VIDEO, "onResume: ");
+        super.onResume();
+
+        // allows other activities/services to know that chat IS in the foreground
+        NetMeApp.setChatVisible(true);
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Starts a brand new video session with an invited contact and an existing chat
+     *
+     * @param incomingIntent the intent containing needed information
+     */
+    private boolean startVideo(Intent incomingIntent) {
+        Log.i(Constants.TAG_VIDEO, "startVideo: ");
+        // getting information
+        String invited = incomingIntent.getStringExtra(EXTRA_INVITED);
+        long chatId = incomingIntent.getLongExtra(EXTRA_CHAT_ID, -1);
+
+        // don't continue if the chat id is bad
+        if (invited == null || invited.isEmpty()) return false;
+
+        // adjust the visibilities to the text mode
+        textFragContainer.setVisibility(View.GONE);
+        videoFragContainer.setVisibility(View.VISIBLE);
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
+        // creating the text fragment
+        if (chatId > -1) {
+            Bundle textExtras = new Bundle();
+            textExtras.putLong(TextFragment.EXTRA_CHAT_ID, chatId);
+            textExtras.putBoolean(TextFragment.EXTRA_VIDEO_MODE, true);
+            textFrag = new TextFragment();
+            textFrag.setArguments(textExtras);
+            transaction.add(R.id.chat_text_frag_container, textFrag);
+        }
+
+        //creating the video fragment
+        Bundle videoExtras = new Bundle();
+        videoExtras.putString(Constants.EXTRA_INVITED, invited);
+        videoExtras.putInt(Constants.EXTRA_TYPE, Constants.TYPE_START);
+        videoFrag = new VideoFragment();
+        videoFrag.setArguments(videoExtras);
+
+        // add the fragment
+        transaction.add(R.id.chat_video_frag_container, videoFrag).commit();
+        return true;
+    }
+
+    /**
+     * Shows the answering screen for an incoming call when no call is in progress.
+     *
+     * @param incomingIntent the intent containing the needed information
+     */
+    private boolean ringVideo(Intent incomingIntent) {
+        Log.i(Constants.TAG_VIDEO, "ringVideo: ");
+        // getting information
+        String invited = incomingIntent.getStringExtra(EXTRA_INVITED);
+        String name = incomingIntent.getStringExtra(EXTRA_INVITED_NAME);
+        long meetingId = incomingIntent.getLongExtra(EXTRA_MEETING_ID, -1);
+        long chatId = incomingIntent.getLongExtra(EXTRA_CHAT_ID, -1);
+        //此处获取selectType类型，待服务器端修改好后，从GcmPush处获取
+        meetingType = incomingIntent.getIntExtra(EXTRA_MEETING_TYPE,-1);
+        // do not continue with ringing if the chat id or meeting id are bad or the this meeting is from an old intent
+        if (chatId > -1 && meetingId > -1 && NetMeApp.isCallUnhandled(meetingId)) {
+            NetMeApp.setCallHandledStatus(meetingId, false);
+            // adjust the visibilities to the text mode
+            textFragContainer.setVisibility(View.GONE);
+            videoFragContainer.setVisibility(View.VISIBLE);
+
+            // creating the text fragment
+            Bundle textExtras = new Bundle();
+            textExtras.putLong(TextFragment.EXTRA_CHAT_ID, chatId);
+            textExtras.putBoolean(TextFragment.EXTRA_VIDEO_MODE, true);
+            textFrag = new TextFragment();
+            textFrag.setArguments(textExtras);
+
+            if (meetingType == Constants.MEETING_VIDEO) {
+                //creating the video fragment
+                Bundle videoExtras = new Bundle();
+                videoExtras.putString(Constants.EXTRA_INVITED, invited);
+                videoExtras.putString(Constants.EXTRA_INVITED_NAME, name);
+                videoExtras.putLong(Constants.EXTRA_MEETING_ID, meetingId);
+                videoExtras.putInt(Constants.EXTRA_TYPE, Constants.TYPE_RING);
+                videoFrag = new VideoFragment();
+                videoFrag.setArguments(videoExtras);
+
+                // add the fragment
+                getFragmentManager().beginTransaction()
+                        .add(R.id.chat_video_frag_container, videoFrag)
+                        .add(R.id.chat_text_frag_container, textFrag)
+                        .commit();
+            } else if (meetingType == Constants.MEETING_VOICE) {
+                //creating the voice fragment
+                Bundle voiceExtras = new Bundle();
+                voiceExtras.putString(Constants.EXTRA_INVITED, invited);
+                voiceExtras.putString(Constants.EXTRA_INVITED_NAME, name);
+                voiceExtras.putLong(Constants.EXTRA_MEETING_ID, meetingId);
+                voiceExtras.putInt(Constants.EXTRA_TYPE, Constants.TYPE_RING);
+                voiceFrag = new VoiceFragment();
+                voiceFrag.setArguments(voiceExtras);
+
+                // add the fragment
+                getFragmentManager().beginTransaction()
+                        .add(R.id.chat_video_frag_container, voiceFrag)
+                        .add(R.id.chat_text_frag_container, textFrag)
+                        .commit();
+
+            }
+        }
+        // if needed info is not provided, return to the start
+        else {
+            Intent intent = new Intent(this, PhoneRetrievalActivity.class);
+            startActivity(intent);
+            endCallCheck = false;
+            finish();
+        }
+        return true;
+    }
+
+    /**
+     * Starts a text chat with the invited user(s) or continues the provided chat
+     *
+     * @param incomingIntent the intent containing needed information
+     */
+    private boolean startText(Intent incomingIntent) {
+        Log.i(Constants.TAG_VIDEO, "startText: ");
+        // getting information
+        long chatId = incomingIntent.getLongExtra(EXTRA_CHAT_ID, -1);
+        String invited = incomingIntent.getStringExtra(EXTRA_INVITED);
+
+        // adjust the visibilities to the text mode
+        textFragContainer.setVisibility(View.VISIBLE);
+        videoFragContainer.setVisibility(View.GONE);
+
+        // creating the text fragment
+        Bundle textExtras = new Bundle();
+        textExtras.putLong(TextFragment.EXTRA_CHAT_ID, chatId);
+        textExtras.putString(TextFragment.EXTRA_INVITED, invited);
+        textExtras.putBoolean(TextFragment.EXTRA_VIDEO_MODE, false);
+        textFrag = new TextFragment();
+        textFrag.setArguments(textExtras);
+
+        // add the fragment
+        getFragmentManager().beginTransaction()
+                .add(R.id.chat_text_frag_container, textFrag)
+                .commit();
+
+        endCallCheck = false;
+
+        return true;
+    }
+
+    /**
+     * Takes care of ending the current call and switching to the call with the new contact
+     *
+     * @param incomingIntent the intent containing needed information
+     */
+    @SuppressWarnings("deprecation")
+    private void handleSwitchToNewCall(Intent incomingIntent) {
+        Log.i(Constants.TAG_VIDEO, "handleSwitchToNewCall: ");
+        // End current meeting
+        clearAllViews();
+        alertServerEndMeeting();
+
+        // getting information
+        String invited = incomingIntent.getStringExtra(EXTRA_INVITED);
+        String name = incomingIntent.getStringExtra(EXTRA_INVITED_NAME);
+        long meetingId = incomingIntent.getLongExtra(EXTRA_MEETING_ID, -1);
+        long chatId = incomingIntent.getLongExtra(EXTRA_CHAT_ID, -1);
+        int meetingType = incomingIntent.getIntExtra(EXTRA_MEETING_TYPE,-1);
+
+        if (chatId > -1 && meetingId > -1 && NetMeApp.isCallUnhandled(meetingId)) {
+            NetMeApp.setCallHandledStatus(meetingId, false);
+            // adjust the visibilities to the text mode
+            textFragContainer.setVisibility(View.GONE);
+            videoFragContainer.setVisibility(View.VISIBLE);
+
+            // creating the text fragment
+            Bundle textExtras = new Bundle();
+            textExtras.putLong(TextFragment.EXTRA_CHAT_ID, chatId);
+            textExtras.putBoolean(TextFragment.EXTRA_VIDEO_MODE, true);
+            textFrag = new TextFragment();
+            textFrag.setArguments(textExtras);
+
+            if (Constants.MEETING_VIDEO == meetingType) {
+                //creating the video fragment
+                Bundle videoExtras = new Bundle();
+                videoExtras.putString(Constants.EXTRA_INVITED, invited);
+                videoExtras.putString(Constants.EXTRA_INVITED_NAME, name);
+                videoExtras.putLong(Constants.EXTRA_MEETING_ID, meetingId);
+                videoExtras.putInt(Constants.EXTRA_TYPE, Constants.TYPE_SWITCH);
+                videoFrag = new VideoFragment();
+                videoFrag.setArguments(videoExtras);
+
+                // add the fragment
+                getFragmentManager().beginTransaction()
+                        .add(R.id.chat_video_frag_container, videoFrag)
+                        .add(R.id.chat_text_frag_container, textFrag)
+                        .commit();
+            }else if (Constants.MEETING_VOICE == meetingType){
+                //creating the voice fragment
+                Bundle voiceExtras = new Bundle();
+                voiceExtras.putString(Constants.EXTRA_INVITED, invited);
+                voiceExtras.putString(Constants.EXTRA_INVITED_NAME, name);
+                voiceExtras.putLong(Constants.EXTRA_MEETING_ID, meetingId);
+                voiceExtras.putInt(Constants.EXTRA_TYPE, Constants.TYPE_SWITCH);
+                voiceFrag = new VoiceFragment();
+                voiceFrag.setArguments(voiceExtras);
+
+                // add the fragment
+                getFragmentManager().beginTransaction()
+                        .add(R.id.chat_video_frag_container, voiceFrag)
+                        .add(R.id.chat_text_frag_container, textFrag)
+                        .commit();
+            }
+        }
+        // if needed info is not provided, return to the start
+        else {
+            Intent intent = new Intent(this, PhoneRetrievalActivity.class);
+            startActivity(intent);
+            endCallCheck = false;
+            finish();
+        }
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Creates and shows the interrupt alert dialog for when the user is currently in a call and
+     * receives a call from a different user.
+     *
+     * @param incomingIntent the intent with the needed information
+     */
+    private void showInterruptAndStartDismissTimer(final Intent incomingIntent) {
+        Log.i(Constants.TAG_VIDEO, "showInterruptAndStartDismissTimer: ");
+        // try to get the user info
+        final String number = incomingIntent.getStringExtra(EXTRA_INVITED);
+        final Contact contact = NetMeApp.getContactWith(number);
+        final long meetingId = incomingIntent.getLongExtra(EXTRA_MEETING_ID, -1);
+
+        //setting up the alertView
+        View alertView = getLayoutInflater().inflate(R.layout.dialog_new_call_interrupt, null, false);
+        ImageView avatarIv = (ImageView) alertView.findViewById(R.id.interrupt_alert_avatar);
+        TextView nameTv = (TextView) alertView.findViewById(R.id.interrupt_alert_name);
+        TextView messageTv = (TextView) alertView.findViewById(R.id.interrupt_alert_message);
+        TextView timeTv = (TextView) alertView.findViewById(R.id.interrupt_alert_time);
+
+        // set the contact image
+        if (contact != null) {
+            Picasso.with(this)
+                    .load(contact.getAvatarUri())
+                    .placeholder(R.drawable.empty_avatar)
+                    .into(avatarIv);
+        }
+
+        // figure out and set the contact name
+        final String fromName;
+        if (contact != null && contact.getName() != null && !contact.getName().isEmpty()) {
+            fromName = contact.getName();
+        } else fromName = number;
+        nameTv.setText(fromName);
+
+        // setting the message
+        messageTv.setText(R.string.incoming_call);
+
+        // set the time
+        long timeInMillis = Calendar.getInstance().getTimeInMillis();
+        Date timeDate = new Date();
+        timeDate.setTime(timeInMillis);
+        String timeString = DateFormat.getTimeInstance().format(timeDate);
+        timeTv.setText(timeString);
+
+        // this will automatically dismiss the interrupt dialog
+        final Timer interruptTimeOut = new Timer();
+
+        // this pending intent will start the main activity to view logs to show the missed call
+        final Intent intent = new Intent(ChatActivity.this, MainActivity.class);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(
+                getApplicationContext(),
+                10,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        // show a dialog about the new incoming call
+        final AlertDialog interrupt = new AlertDialog.Builder(this)
+                .setView(alertView)
+                // if the user hits the delcine button
+                .setNegativeButton(
+                        R.string.decline,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                interruptTimeOut.cancel();
+                                DeviceUtils.generateNotification(ChatActivity.this, "Missed call from " + fromName, pendingIntent);
+                            }
+                        }
+                )
+                .setPositiveButton(
+                        R.string.accept,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                interruptTimeOut.cancel();
+                                NetMeApp.setCallHandledStatus(meetingId, true);
+                                handleSwitchToNewCall(incomingIntent);
+                            }
+                        }
+                )
+                .show();
+
+        // start the dismiss timeout
+        interruptTimeOut.schedule(
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        interrupt.dismiss();
+                        DeviceUtils.generateNotification(ChatActivity.this, "Missed call from " + fromName, pendingIntent);
+                    }
+                },
+                TIME_OUT
+        );
+
+        // start vibrating the device
+        DeviceUtils.vibrate(this);
+    }
+
+    /**
+     * Shows a dialog/popup that will verify that the user wants to end the video.
+     * This is done to prevent accidental video closure.
+     */
+    private void verifyUserWantsToEnd() {
+        Log.i(Constants.TAG_VIDEO, "verifyUserWantsToEnd: ");
+        new AlertDialog.Builder(this)
+                .setTitle("End Video")
+                .setMessage("Do you wish to end this video call?")
+                .setNegativeButton(
+                        R.string.cancel,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        }
+                )
+                .setPositiveButton(
+                        R.string.end_video,
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                endCallCheck = false;
+                                finish();
+                            }
+                        }
+                )
+                .show();
+    }
+
+    /**
+     * Resets the visibility of all view to what they are at the initiation of this activity
+     */
+    private void clearAllViews() {
+        Log.i(Constants.TAG_VIDEO, "clearAllViews: ");
+        // remove text fragment
+        if (textFrag != null) {
+            getFragmentManager().beginTransaction().remove(textFrag).commitAllowingStateLoss();
+            textFrag = null;
+        }
+
+        // remove video fragment
+        if (videoFrag != null) {
+            videoFrag.sessionDisconnect();
+            getFragmentManager().beginTransaction().remove(videoFrag).commitAllowingStateLoss();
+            videoFrag = null;
+        }
+        // remove voice fragment
+        if (voiceFrag != null) {
+            voiceFrag.sessionDisconnect();
+            getFragmentManager().beginTransaction().remove(voiceFrag).commitAllowingStateLoss();
+            voiceFrag = null;
+        }
+    }
+
+    /**
+     * Alerts the server to mark the meeting as closed or that the user is leaving the meeting.
+     * The server will then take care of alerting the contact that the meeting has ended.
+     */
+    private void alertServerEndMeeting() {
+        // do when the contact was the one who initiated the call
+        if (getIntent().getStringExtra(EXTRA_CHAT_TYPE).equals(TYPE_RING_VIDEO) && videoFrag != null && videoFrag.getMeetingId() > -1) {
+            Intent intent = new Intent(ChatActivity.this, EndMeetingService.class);
+            intent.putExtra(EndMeetingService.EXTRA_SERVICE_CMD, EndMeetingService.CMD_LEAVE_VIDEO);
+            intent.putExtra(EndMeetingService.EXTRA_MEETING_ID, videoFrag.getMeetingId());
+            startService(intent);
+        }
+        // do when the user was the one who initiated the call
+        else if (videoFrag != null && videoFrag.getMeetingId() > -1) {
+            Intent intent = new Intent(ChatActivity.this, EndMeetingService.class);
+            intent.putExtra(EndMeetingService.EXTRA_SERVICE_CMD, EndMeetingService.CMD_CLOSE_VIDEO);
+            intent.putExtra(EndMeetingService.EXTRA_MEETING_ID, videoFrag.getMeetingId());
+            startService(intent);
+        }
+
+        // do when the contact was the one who initiated the call
+        if (getIntent().getStringExtra(EXTRA_CHAT_TYPE).equals(TYPE_RING_VIDEO) && voiceFrag != null && voiceFrag.getMeetingId() > -1) {
+            Intent intent = new Intent(ChatActivity.this, EndMeetingService.class);
+            intent.putExtra(EndMeetingService.EXTRA_SERVICE_CMD, EndMeetingService.CMD_LEAVE_VIDEO);
+            intent.putExtra(EndMeetingService.EXTRA_MEETING_ID, voiceFrag.getMeetingId());
+            startService(intent);
+        }
+        // do when the user was the one who initiated the call
+        else if (voiceFrag != null && voiceFrag.getMeetingId() > -1) {
+            Intent intent = new Intent(ChatActivity.this, EndMeetingService.class);
+            intent.putExtra(EndMeetingService.EXTRA_SERVICE_CMD, EndMeetingService.CMD_CLOSE_VIDEO);
+            intent.putExtra(EndMeetingService.EXTRA_MEETING_ID, voiceFrag.getMeetingId());
+            startService(intent);
+        }
+    }
+
+    /**
+     * Button click method for the hide chat button
+     * Makes the Text Fragment disappear and the video fragment take fullscreen
+     */
+
+
+    public void onHideChatClicked(View view) {
+        Log.i(Constants.TAG_VIDEO, "onHideChatClicked: ");
+        toggleFullScreen(true, meetingType);
+    }
+
+    /**
+     * Alerts the user that the application was unable to connect to the internet and will be
+     * terminating
+     */
+    private void displayBadConnectionAlert() {
+        //displays a message stating that the internet connection has degraded too much and shuts down the activity
+        new AlertDialog.Builder(this)
+                .setTitle("Connection Lost")
+                .setMessage("Lost stable network connection, check your connection and try again.")
+                .setNeutralButton(
+                        "OK",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                endCallCheck = false;
+                                finish();
+                            }
+                        }
+                )
+                .show();
+    }
+
+
+/*--------------------------------------- Interface Methods --------------------------------------*/
+
+
+    /**
+     * Toggles the screen between full video and half video/half text
+     *
+     * @param fullScreenOn true will make the screen be full video,
+     *                     false will make the screen video/text
+     */
+    @Override
+    public void toggleFullScreen(boolean fullScreenOn, int meetingType) {
+        Log.i(Constants.TAG_VIDEO, "toggleFullScreen: ");
+        if (fullScreenOn) {
+            if (meetingType == Constants.MEETING_VIDEO) {
+                getFragmentManager().beginTransaction()
+                        .hide(textFrag)
+                        .show(videoFrag)
+                        .commit();
+
+                videoFrag.showScreenControls();
+                hideTextBtn.setVisibility(View.GONE);
+                textFragContainer.setVisibility(View.GONE);
+            } else if (meetingType == Constants.MEETING_VOICE) {
+                getFragmentManager().beginTransaction()
+                        .hide(textFrag)
+                        .show(voiceFrag)
+                        .commit();
+
+                voiceFrag.showScreenControls();
+                hideTextBtn.setVisibility(View.GONE);
+                textFragContainer.setVisibility(View.GONE);
+            }
+
+        } else {
+            if (meetingType == Constants.MEETING_VIDEO) {
+                getFragmentManager().beginTransaction()
+                        .show(textFrag)
+                        .show(videoFrag)
+                        .commit();
+
+                videoFrag.hideScreenControls();
+                hideTextBtn.setVisibility(View.VISIBLE);
+                textFragContainer.setVisibility(View.VISIBLE);
+            } else if (meetingType == Constants.MEETING_VOICE) {
+                getFragmentManager().beginTransaction()
+                        .show(textFrag)
+                        .show(voiceFrag)
+                        .commit();
+
+                voiceFrag.hideScreenControls();
+                hideTextBtn.setVisibility(View.VISIBLE);
+                textFragContainer.setVisibility(View.VISIBLE);
+            }
+
+        }
+    }
+
+    /**
+     * Hides the keyboard from the screen.
+     * Uses an invisible edit text field which can be given focus and then used to hide the keyboard.
+     */
+    @Override
+    public void hideKeyboard() {
+        Log.i(Constants.TAG_VIDEO, "hideKeyboard: ");
+        invisibleET.requestFocus();
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(invisibleET.getWindowToken(), 0);
+    }
+
+    /**
+     * Called when a video is finished is about to be finished.
+     * If end verification is requested, then the end confirmation dialog is shown
+     * before attempting to end this activity.
+     *
+     * @param performEndVerification true will show the confirmation dialog,
+     *                               false will just finish the activity
+     */
+    @Override
+    public void finishVideo(boolean performEndVerification) {
+        Log.i(Constants.TAG_VIDEO, "finishVideo: ");
+        endCallCheck = performEndVerification;
+        finish();
+    }
+
+    /**
+     * Called after a video chat is started and a text chat id is received.
+     * If the new chat id doesn't match the current chat it, then the current text chat fragment (if there is one)
+     * are replaced with a new text fragment for the new chatId
+     *
+     * @param chatId the new text chat id
+     */
+    @Override
+    public void startChat(long chatId) {
+        Log.i(Constants.TAG_VIDEO, "startChat: ");
+        if (textFrag == null || textFrag.getChatId() != chatId) {
+            // create the text fragment with the correct chatId
+            Bundle textExtras = new Bundle();
+            textExtras.putLong(TextFragment.EXTRA_CHAT_ID, chatId);
+            textExtras.putBoolean(TextFragment.EXTRA_VIDEO_MODE, true);
+            textFrag = new TextFragment();
+            textFrag.setArguments(textExtras);
+
+            // add the fragment
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.chat_text_frag_container, textFrag)
+                    .commit();
+        } else if (textFrag != null) textFrag.setVideoMode(true);
+    }
+
+    /**
+     * Called by the TextFragment when the user wants to switch from just text to video and text
+     * chatting.
+     *
+     * @param invited the user to include in the video
+     * @param chatId  the chat id to use when starting the video
+     */
+    @Override
+    public void switchToVideo(String invited, long chatId, int selectType) {
+        if (selectType == Constants.MEETING_VIDEO) {
+            Log.i(Constants.TAG_VIDEO, "switchToVideo: ");
+            //creating the video fragment
+            Bundle videoExtras = new Bundle();
+            videoExtras.putString(Constants.EXTRA_INVITED, invited);
+            videoExtras.putLong(Constants.EXTRA_CHAT_ID, chatId);
+            videoExtras.putInt(Constants.EXTRA_TYPE, Constants.TYPE_START);
+            videoFrag = new VideoFragment();
+            videoFrag.setArguments(videoExtras);
+
+            // add the fragment
+            getFragmentManager().beginTransaction()
+                    .add(R.id.chat_video_frag_container, videoFrag)
+                    .commit();
+        } else if (selectType == Constants.MEETING_VOICE) {
+            Log.i(Constants.TAG_VOICE, "switchToVoice: ");
+            //creating the video fragment
+            Bundle voiceExtras = new Bundle();
+            voiceExtras.putString(Constants.EXTRA_INVITED, invited);
+            voiceExtras.putLong(Constants.EXTRA_CHAT_ID, chatId);
+            voiceExtras.putInt(Constants.EXTRA_TYPE, Constants.TYPE_START);
+            voiceExtras.putInt(Constants.EXTRA_SELECT_TYPE, Constants.MEETING_VOICE);
+            voiceFrag = new VoiceFragment();
+            voiceFrag.setArguments(voiceExtras);
+
+            // add the fragment
+            getFragmentManager().beginTransaction()
+                    .add(R.id.chat_video_frag_container, voiceFrag)
+                    .commit();
+        }
+        videoFragContainer.setVisibility(View.VISIBLE);
+        textFragContainer.setVisibility(View.GONE);
+    }
+}

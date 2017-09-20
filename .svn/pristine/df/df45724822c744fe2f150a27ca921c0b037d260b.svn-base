@@ -1,0 +1,67 @@
+package com.hsdi.NetMe.ui.contact_selection;
+
+import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.models.Contact;
+import com.hsdi.NetMe.util.CircleTransformation;
+import com.squareup.picasso.Picasso;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+public class SelectContactHolder extends RecyclerView.ViewHolder {
+
+    @Bind(R.id.item_start_avatar)       ImageView avatar;
+    @Bind(R.id.item_start_avatar_letter)TextView avatarLetter;
+    @Bind(R.id.item_start_text)         TextView text;
+    @Bind(R.id.item_start_checkBox)     CheckBox checkBox;
+
+    public View view;
+    public Contact contact;
+
+    public SelectContactHolder(View view, View.OnClickListener onClickListener) {
+        super(view);
+        ButterKnife.bind(this, view);
+
+        this.view = view;
+
+        //making sure that clicking on the contact will select the contact
+        this.view.setOnClickListener(onClickListener);
+        this.view.setTag(this);
+    }
+
+    public void bind(@NonNull Contact contact) {
+        //getting the contact for this position
+        this.contact = contact;
+
+        //load the contact's avatar
+        if (contact.getThumbnailUri() != null) {
+            Picasso.with(view.getContext())
+                    .load(contact.getThumbnailUri())
+                    .placeholder(R.drawable.empty_avatar)
+                    .transform(new CircleTransformation())
+                    .into(avatar);
+        }
+        else {
+            avatar.setImageResource(R.drawable.empty_avatar);
+            avatarLetter.setText(contact.getInitials());
+        }
+
+        //setting the contact's name
+        text.setText(contact.getName());
+    }
+
+    public void setChecked(boolean status) {
+        checkBox.setChecked(status);
+    }
+
+    public Contact getContact() {
+        return contact;
+    }
+}

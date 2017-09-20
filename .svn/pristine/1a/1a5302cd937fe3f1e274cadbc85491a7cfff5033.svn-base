@@ -1,0 +1,141 @@
+package com.hsdi.NetMe.ui.contact_detail;
+
+import android.content.Intent;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.database.ChatTrackerManager;
+import com.hsdi.NetMe.database.RegisteredContactManager;
+import com.hsdi.NetMe.models.Email;
+import com.hsdi.NetMe.models.Phone;
+import com.hsdi.NetMe.ui.chat.ChatActivity;
+import com.hsdi.theme.basic.BaseThemeActivity;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+public class DetailHolder extends RecyclerView.ViewHolder{
+
+    @Bind(R.id.detail_icon)     ImageView typeIcon;
+    @Bind(R.id.detail_title)    TextView title;
+    @Bind(R.id.detail_label)    TextView label;
+    @Bind(R.id.detail_message)  View messageBtn;
+    @Bind(R.id.detail_video)    View videoBtn;
+
+    public DetailHolder(View itemView) {
+        super(itemView);
+        ButterKnife.bind(this, itemView);
+    }
+
+    /**
+     * Updates the views to match the new phone info
+     * @param contactId      the id for the contact
+     * @param phoneObject    the registered phone for this contact
+     * @param first          if it is the first phone object
+     * */
+    public void bind(long contactId, Phone phoneObject, boolean first) {
+        //setting the values
+        title.setText(phoneObject.getFormattedNumber(title.getContext()));
+        label.setText(phoneObject.getTypeLabel());
+
+        typeIcon.setImageResource(R.drawable.phone);
+        ((BaseThemeActivity) title.getContext()).applyTheme(typeIcon,R.drawable.phone);
+
+        // if this is the first phone, show the icon
+        if(first) typeIcon.setVisibility(View.VISIBLE);
+        else typeIcon.setVisibility(View.INVISIBLE);
+
+        setupButtons(contactId, phoneObject.getNumber());
+    }
+
+    /**
+     * Updates the views to match the new email info
+     * @param emailObject    the email object
+     * @param first          if is the first email object
+     * */
+    public void bind(Email emailObject, boolean first) {
+        //setting the values
+        title.setText(emailObject.getAddress());
+        label.setText(emailObject.getTypeLabel());
+
+        typeIcon.setImageResource(R.drawable.mail);
+        ((BaseThemeActivity) title.getContext()).applyTheme(typeIcon,R.drawable.mail);
+
+        // if this is the first email, show the icon
+        if(first) typeIcon.setVisibility(View.VISIBLE);
+        else typeIcon.setVisibility(View.INVISIBLE);
+
+        messageBtn.setVisibility(View.INVISIBLE);
+        videoBtn.setVisibility(View.INVISIBLE);
+    }
+
+    /**
+     * Sets up the video and text start buttons
+     * @param contactId      the contact id
+     * @param phoneNumber    the phone number
+     * */
+    public void setupButtons(long contactId, final String phoneNumber) {
+        // check the database to see if this number is registered
+        boolean isRegistered = RegisteredContactManager.isRegistered(
+                title.getContext(),
+                contactId,
+                phoneNumber
+        );
+
+        // show or hide the buttons
+        messageBtn.setVisibility(isRegistered ? View.VISIBLE : View.INVISIBLE);
+        videoBtn.setVisibility(isRegistered ? View.VISIBLE : View.INVISIBLE);
+
+        // only add the click listeners if this number is registered
+        if(isRegistered) {
+            messageBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // check if a chat already exists
+                    long chatId = ChatTrackerManager.getChatIdFromPhoneNumber(title.getContext(), phoneNumber);
+
+                    // chat exists so continue it
+                    if(chatId >= 0) {
+                        Intent intent = new Intent(title.getContext(), ChatActivity.class);
+                        intent.putExtra(ChatActivity.EXTRA_CHAT_TYPE, ChatActivity.TYPE_TEXT_ONLY);
+                        intent.putExtra(ChatActivity.EXTRA_CHAT_ID, chatId);
+                        title.getContext().startActivity(intent);
+                    }
+                    // tell the chat activity to start a new chat
+                    else {
+                        Intent intent = new Intent(title.getContext(), ChatActivity.class);
+                        intent.putExtra(ChatActivity.EXTRA_CHAT_TYPE, ChatActivity.TYPE_TEXT_ONLY);
+                        intent.putExtra(ChatActivity.EXTRA_INVITED, phoneNumber);
+                        title.getContext().startActivity(intent);
+                    }
+                }
+            });
+            videoBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // check if a chat already exists
+                    long chatId = ChatTrackerManager.getChatIdFromPhoneNumber(title.getContext(), phoneNumber);
+
+                    // chat exists so continue it
+                    if(chatId >= 0) {
+                        Intent intent = new Intent(title.getContext(), ChatActivity.class);
+                        intent.putExtra(ChatActivity.EXTRA_CHAT_TYPE, ChatActivity.TYPE_START_VIDEO);
+                        intent.putExtra(ChatActivity.EXTRA_INVITED, phoneNumber);
+                        intent.putExtra(ChatActivity.EXTRA_CHAT_ID, chatId);
+                        title.getContext().startActivity(intent);
+                    }
+                    // tell the chat activity to start a new chat
+                    else {
+                        Intent intent = new Intent(title.getContext(), ChatActivity.class);
+                        intent.putExtra(ChatActivity.EXTRA_CHAT_TYPE, ChatActivity.TYPE_START_VIDEO);
+                        intent.putExtra(ChatActivity.EXTRA_INVITED, phoneNumber);
+                        title.getContext().startActivity(intent);
+                    }
+                }
+            });
+        }
+    }
+}

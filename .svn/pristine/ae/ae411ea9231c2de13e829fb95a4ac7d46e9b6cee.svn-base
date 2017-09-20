@@ -1,0 +1,144 @@
+package com.hsdi.theme.basic;
+
+import android.content.Context;
+import android.text.TextUtils;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewStub;
+
+import com.hsdi.theme.handler.ThemeHandler;
+
+import java.util.HashMap;
+
+/**
+ * Created by Yu Yong on 2017/8/8.
+ */
+
+public class ThemeLayoutInflaterFactory implements LayoutInflater.Factory {
+
+
+    private static final String namespace = "http://schemas.android.com/yuyong";
+    private static final String ThemeTypeKey = "yuyong_theme_type";
+    private HashMap<View, ThemeHandler> handlers;
+
+    public HashMap<View, ThemeHandler> getHandlers() {
+        return handlers;
+    }
+
+    public enum ThemeTypeValue {
+
+        src,
+        drawableLeft,
+        textColor,
+        textColorHint,
+        background_drawable,
+        style_background_drawable,
+        style_text_color,
+        txt_color_state_list,
+        btn_color_state_list,
+        background_color;
+
+        public static String[] getValues() {
+            return new String[]{
+                    background_color.name(),
+                    src.name(),
+                    drawableLeft.name(),
+                    textColorHint.name(),
+                    background_drawable.name(),
+                    style_background_drawable.name(),
+                    style_text_color.name(),
+                    textColor.name(),
+                    txt_color_state_list.name(),
+                    btn_color_state_list.name()};
+        }
+    }
+
+
+    @Override
+    public View onCreateView(String name, Context context, AttributeSet attrs) {
+
+        Log.i("yuyong_theme", "onCreateView: name = " + name);
+
+        if (1 == 1) {
+            for (int i = 0; i < attrs.getAttributeCount(); i++) {
+                Log.i("yuyong_theme", attrs.getAttributeName(i) + "-->" + attrs.getAttributeValue(i));
+            }
+        }
+
+        //构造View
+        View view = createView(name, context, attrs);
+        //判断有无资源包
+        if (ThemeManager.getCurrentTheme() == ThemeManager.ThemeName.ORANGE_DEFAULT) {
+            return view;
+        }
+        //筛选需要更换的View
+        if (view != null) {
+            String str = attrs.getAttributeValue(namespace, ThemeTypeKey);
+            Log.i("yuyong_theme", "onCreateView: str = " + str);
+            if (str != null) {
+                String[] strs = str.split(";");
+                for (String s : strs) {
+                    if (!TextUtils.isEmpty(s.trim()))
+                        handleTheme(view, ThemeTypeValue.valueOf(s.trim()), attrs, context);
+                }
+            }
+        }
+        return view;
+    }
+
+    public void onDestroy() {
+        if (handlers != null)
+            handlers.clear();
+        handlers = null;
+    }
+
+    private synchronized void handleTheme(View view, ThemeTypeValue value, AttributeSet attas, Context context) {
+        if (handlers == null)
+            handlers = new HashMap<>();
+        ThemeHandler mHandler = ThemeHandlerFactory.getHandler(view, value, attas);
+        handlers.put(view, mHandler);
+        mHandler.init(context);
+        mHandler.doHandler();
+    }
+
+    private View createView(String name, Context context, AttributeSet attrs) {
+
+        View view = null;
+
+        if (name.indexOf('.') > -1) {
+            try {
+                view = LayoutInflater.from(context).createView(name, null, attrs);
+            } catch (Exception e) {
+                view = null;
+            }
+        } else {
+            if ("View".equals(name)) {
+                try {
+                    view = LayoutInflater.from(context).createView(name, "android.view.", attrs);
+                } catch (Exception e) {
+                    view = null;
+                }
+            }
+            if ("ViewStub".equals(name)) {
+                view = new ViewStub(context, attrs);
+            }
+            if (view == null) {
+                try {
+                    view = LayoutInflater.from(context).createView(name, "android.widget.", attrs);
+                } catch (Exception e) {
+                    view = null;
+                }
+            }
+            if (view == null) {
+                try {
+                    view = LayoutInflater.from(context).createView(name, "android.webkit.", attrs);
+                } catch (Exception e) {
+                    view = null;
+                }
+            }
+        }
+        return view;
+    }
+}

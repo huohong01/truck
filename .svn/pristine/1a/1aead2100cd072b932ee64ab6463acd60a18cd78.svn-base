@@ -1,0 +1,60 @@
+package com.hsdi.NetMe.ui.startup;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.ui.startup.recovery.RecoveryCommunications;
+import com.hsdi.NetMe.ui.startup.recovery.RecoveryFailedFragment;
+import com.hsdi.NetMe.ui.startup.recovery.RecoveryMethodFragment;
+import com.hsdi.NetMe.ui.startup.recovery.RecoverySuccessFragment;
+import com.hsdi.theme.basic.BaseThemeActivity;
+
+public class AccountRecoveryActivity extends BaseThemeActivity implements RecoveryCommunications {
+    private static final String TAG = "AccRecoveryActivity";
+
+    private static FragmentManager fragmentManager;
+    private final int holderId = R.id.recovery_holder;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_account_recovery);
+        fragmentManager = getSupportFragmentManager();
+        onTryAgain();
+    }
+
+    @Override
+    public void onRecoverySuccess() {
+        fragmentManager.beginTransaction()
+                .replace(holderId, new RecoverySuccessFragment())
+                .commit();
+    }
+
+    @Override
+    public void onRecoveryFailed() {
+        fragmentManager.beginTransaction()
+                .replace(holderId, new RecoveryFailedFragment())
+                .commit();
+    }
+
+    @Override
+    public void onTryAgain() {
+        fragmentManager.beginTransaction()
+                .replace(holderId, new RecoveryMethodFragment())
+                .commit();
+    }
+
+    @Override
+    public void onReturnToLogin() {
+        finish();
+    }
+
+    @Override
+    public void onSignUp() {
+        Intent signUpIntent = new Intent(this, RegisterActivity.class);
+        startActivity(signUpIntent);
+        finish();
+    }
+}

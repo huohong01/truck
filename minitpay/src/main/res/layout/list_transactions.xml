@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/padding_10dp"
+    android:layout_centerHorizontal="true"
+    android:id="@+id/rlTransactions"
+    android:background="@color/white"
+    android:layout_marginLeft="@dimen/padding_10dp"
+    android:layout_marginRight="@dimen/padding_10dp">
+
+    <com.devspark.robototextview.widget.RobotoTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvTransactionAge"
+        android:layout_marginRight="5dp"
+        android:padding="@dimen/padding_5dp"
+        android:text="text"
+        android:textSize="@dimen/verySmallFontSize"
+        app:fontFamily="roboto"
+        android:textColor="@color/black"
+        app:textWeight="normal"
+        android:layout_centerVertical="true" />
+
+
+    <com.devspark.robototextview.widget.RobotoTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/verySmallFontSize"
+        android:padding="@dimen/padding_5dp"
+        android:text="text"
+        android:id="@+id/tvCompanyName"
+        android:gravity="right"
+        app:fontFamily="roboto"
+        android:layout_marginRight="5dp"
+        android:textColor="@color/black"
+        app:textWeight="normal"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
+
+    <com.devspark.robototextview.widget.RobotoTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvTotalAmount"
+        android:padding="@dimen/padding_5dp"
+        android:text="text"
+        android:textSize="@dimen/verySmallFontSize"
+        app:fontFamily="roboto"
+        android:textColor="@color/black"
+        app:textWeight="normal"
+        android:layout_alignTop="@+id/tvCompanyName"
+        android:layout_alignParentEnd="true" />
+
+
+</RelativeLayout>

@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.hsdi.NetMe"
+    android:versionCode="29"
+    android:versionName="2.3.0 (Build 1708.31)" >
+
+    <uses-sdk
+        android:minSdkVersion="19"
+        android:targetSdkVersion="24" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_PROFILE" />
+    <uses-permission android:name="android.permission.WRITE_PROFILE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <uses-permission android:name="com.google.android.c2dm.intent.RECEIVE" />
+
+    <permission
+        android:name="com.hsdi.NetMe.permission.C2D_MESSAGE"
+        android:protectionLevel="signature" />
+
+    <!-- This should remain the same as long as the Sender Id in GCMRegisterTask remains the same -->
+    <uses-permission android:name="com.idg.NetMe.permission.C2D_MESSAGE" />
+    <uses-permission android:name="com.macate.MBMView.permission.C2D_MESSAGE" />
+
+    <!--
+     The following two permissions are not required to use
+     Google Maps Android API v2, but are recommended.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+
+    <!-- Don't require camera, as this requires a rear camera. This allows it to work on the Nexus 7 -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.front"
+        android:required="false" /> <!-- TODO replace above two with next line after Android 4.2 -->
+    <!-- <uses-feature android:name="android.hardware.camera.any"/> -->
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.flash"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.screen.landscape"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.wifi"
+        android:required="false" />
+
+    <meta-data
+        android:name="android.support.VERSION"
+        android:value="25.3.1" />
+
+    <application
+        android:name="com.hsdi.NetMe.NetMeApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher2"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme" >
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.hsdi.NetMe"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_file_paths" />
+        </provider>
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyBIY1YrSZX9r62seNJkz10tgc3o3PBbs3o" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+
+        <receiver
+            android:name="com.hsdi.NetMe.network.GcmBroadcastReceiver"
+            android:permission="com.google.android.c2dm.permission.SEND" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+
+                <category android:name="com.hsdi.NetMe" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="com.hsdi.NetMe.network.SmsPinListener"
+            android:permission="android.permission.BROADCAST_SMS" >
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name="com.hsdi.NetMe.network.EndMeetingService" />
+
+        <activity android:name="za.co.riggaroo.materialhelptutorial.tutorial.MaterialTutorialActivity" />
+        <activity android:name="com.soundcloud.android.crop.CropImageActivity" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.startup.PhoneRetrievalActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.hsdi.NetMe.ui.startup.LoginActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.startup.AccountRecoveryActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.startup.RegisterActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.main.MainActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" >
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.app.searchable"
+                android:resource="@xml/searchable" />
+        </activity>
+        <activity
+            android:name="com.hsdi.NetMe.ui.contact_detail.ContactDetailActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.chat.ChatActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.chat.text.helper_activities.ImageViewActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.contact_selection.SelectContactsActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.chat.text.helper_activities.EditMessageActivity"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.chat.text.helper_activities.MapActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.chat.text.helper_activities.ViewLocationActivity"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.chat.text.helper_activities.SoundRecorderActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:theme="@style/SoundRecorderTheme"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.ProfileActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.EulaActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.NetMe.ui.startup.ChangePwdActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name="com.hsdi.MinitPay.MinitPayActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.hsdi.MinitPay.LoginInMiNitActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.hsdi.MinitPay.LoginOutActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.hsdi.MinitPay.BalanceActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.hsdi.MinitPay.ShowCodeActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.hsdi.MinitPay.PayActivity"
+            android:screenOrientation="portrait" />
+        <activity android:name="com.hsdi.NetMe.ui.startup.VersionActivity" />
+
+        <service android:name="com.hsdi.NetMe.network.NotificationService" >
+            <intent-filter>
+                <action android:name="com.hsdi.NetMe.network.NOTIFICATION_SERVICE" />
+            </intent-filter>
+        </service>
+
+        <receiver android:name="com.hsdi.NetMe.network.HeadsetPlugReceiver" >
+            <intent-filter>
+                <action
+                    android:name="android.intent.action.HEADSET_PLUG"
+                    android:enabled="true" />
+            </intent-filter>
+        </receiver>
+
+        <activity android:name="com.hsdi.NetMe.ui.startup.ThemeActivity" />
+        <activity
+            android:name="com.macate.minitpay.activities.LauncherActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppBaseTheme" >
+        </activity>
+        <activity
+            android:name="com.macate.minitpay.activities.LoginActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.macate.minitpay.activities.LauncherActivity" />
+        </activity>
+        <activity
+            android:name="com.macate.minitpay.activities.HomeActivity"
+            android:label="@string/app_name"
+            android:parentActivityName="com.macate.minitpay.activities.LoginActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppBaseTheme" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.macate.minitpay.activities.LoginActivity" />
+        </activity>
+        <activity
+            android:name="com.macate.minitpay.activities.ShoppingCartActivity"
+            android:label="@string/title_activity_shopping_cart"
+            android:parentActivityName="com.macate.minitpay.activities.HomeActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppBaseTheme" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.macate.minitpay.activities.HomeActivity" />
+        </activity>
+        <activity
+            android:name="com.macate.minitpay.activities.TopupActivity"
+            android:label="@string/topup_minitpay_account"
+            android:parentActivityName="com.macate.minitpay.activities.HomeActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppBaseTheme" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.macate.minitpay.activities.HomeActivity" />
+        </activity>
+        <activity
+            android:name="com.macate.minitpay.activities.AddCardActivity"
+            android:label="@string/add_card"
+            android:parentActivityName="com.macate.minitpay.activities.HomeActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppBaseTheme" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.macate.minitpay.activities.TopupActivity" />
+        </activity>
+        <activity
+            android:name="com.macate.minitpay.activities.ManageCardActivity"
+            android:label="@string/title_activity_manage_card"
+            android:parentActivityName="com.macate.minitpay.activities.HomeActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppBaseTheme" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.macate.minitpay.activities.HomeActivity" />
+        </activity>
+        <activity
+            android:name="com.macate.minitpay.activities.PurchaseHistoryActivity"
+            android:label="@string/purchase_history"
+            android:parentActivityName="com.macate.minitpay.activities.HomeActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppBaseTheme" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.macate.minitpay.activities.HomeActivity" />
+        </activity>
+        <activity
+            android:name="com.macate.minitpay.activities.ManageAccountActivity"
+            android:label="@string/title_activity_manage_account"
+            android:parentActivityName="com.macate.minitpay.activities.HomeActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppBaseTheme" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.macate.minitpay.activities.HomeActivity" />
+        </activity>
+        <activity
+            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:clearTaskOnLaunch="true"
+            android:screenOrientation="sensorLandscape"
+            android:stateNotNeeded="true"
+            android:theme="@style/zxing_CaptureTheme"
+            android:windowSoftInputMode="stateAlwaysHidden" />
+
+        <provider
+            android:name="com.android.tools.fd.runtime.InstantRunContentProvider"
+            android:authorities="com.hsdi.NetMe.com.android.tools.fd.runtime.InstantRunContentProvider"
+            android:multiprocess="true" />
+    </application>
+
+</manifest>

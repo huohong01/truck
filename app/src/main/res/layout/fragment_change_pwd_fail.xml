@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/primary"
+    android:weightSum="1">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="50dp"
+        android:text="@string/recovery_failed_header"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_extra_large"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="30dp"
+        android:gravity="center"
+        android:text="@string/change_pwd_failed_message"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_medium"/>
+
+
+    <TextView
+        android:id="@+id/change_failed_retry"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:paddingStart="60dp"
+        android:paddingEnd="60dp"
+        android:layout_gravity="center"
+        android:text="@string/try_again"
+        android:textColor="@color/primary_txt"
+        android:background="@color/btn_accent"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:text="@string/or"
+        android:textAllCaps="true"
+        android:layout_gravity="center"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_large"/>
+
+    <TextView
+        android:id="@+id/change_failed_sign_in"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:paddingStart="60dp"
+        android:paddingEnd="60dp"
+        android:layout_gravity="center"
+        android:text="@string/signIn"/>
+
+</LinearLayout>

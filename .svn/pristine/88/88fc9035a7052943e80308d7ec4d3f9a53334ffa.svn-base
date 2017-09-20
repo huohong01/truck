@@ -1,0 +1,25 @@
+package com.hsdi.theme.handler;
+
+import android.util.AttributeSet;
+import android.view.MenuItem;
+
+import com.hsdi.theme.basic.ThemeLayoutInflaterFactory;
+
+/**
+ * Created by huohong.yi on 2017/8/28.
+ */
+
+public class MenuItemIconThemeHandler extends DrawableThemeHandler {
+    public MenuItemIconThemeHandler(Object view, ThemeLayoutInflaterFactory.ThemeTypeValue value, AttributeSet attas) {
+        super(view, value, attas);
+    }
+
+    @Override
+    public void doHandler() {
+
+    }
+
+    public void doHandler(int id){
+        ((MenuItem)oView.get()).setIcon(getDrawable(id));
+    }
+}

@@ -1,0 +1,55 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.startup.recovery.RecoveryMethodFragment"
+    android:background="@color/primary">
+
+    <TextView
+        android:id="@+id/recovery_method_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:paddingTop="50dp"
+        android:paddingBottom="50dp"
+        android:text="@string/recover_account"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_large"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/recovery_method_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/recovery_method_header"
+        android:text="@string/recovery_message"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_medium"/>
+
+    <EditText
+        android:id="@+id/recovery_method_email_entry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/recovery_method_message"
+        android:layout_margin="50dp"
+        android:inputType="textEmailAddress"
+        android:hint="@string/email"
+        android:textColorHint="@color/primary_txt_inverse"
+        android:textColor="@color/primary_txt_inverse"/>
+
+    <Button
+        yuyong:yuyong_theme_type="background_color"
+        android:id="@+id/recovery_method_submit_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/recovery_method_email_entry"
+        android:paddingStart="60dp"
+        android:paddingEnd="60dp"
+        android:text="@string/submit"
+        android:textColor="@color/secondary_txt_inverse"
+        android:background="@color/btn_primary"/>
+</RelativeLayout>

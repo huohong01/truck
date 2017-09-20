@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/primary">
+
+    <TextView
+        android:id="@+id/recovery_failed_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:text="@string/recovery_failed_header"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_extra_large"/>
+
+    <TextView
+        android:id="@+id/recovery_failed_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/recovery_failed_header"
+        android:layout_margin="30dp"
+        android:gravity="center"
+        android:text="@string/recovery_failed_message"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_medium"/>
+
+    <FrameLayout
+        android:id="@+id/recovery_failed_retry_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/recovery_failed_message"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:padding="2dp"
+        android:background="@color/btn_accent">
+
+        <Button
+            android:id="@+id/recovery_failed_retry_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="60dp"
+            android:paddingEnd="60dp"
+            android:text="@string/try_again"
+            android:textColor="@color/primary_txt"
+            android:background="@color/btn_accent"/>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/recovery_failed_or"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/recovery_failed_retry_container"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:text="@string/or"
+        android:textAllCaps="true"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_large"/>
+
+    <Button
+        yuyong:yuyong_theme_type="background_color"
+        android:id="@+id/recovery_failed_signup_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/recovery_failed_or"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:paddingStart="60dp"
+        android:paddingEnd="60dp"
+        android:text="@string/sign_up"
+        android:textColor="@color/secondary_txt_inverse"
+        android:background="@color/btn_primary"/>
+</RelativeLayout>

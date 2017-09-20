@@ -1,0 +1,136 @@
+package com.hsdi.NetMe.ui.startup.change_password;
+
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.models.response_models.BaseResponse;
+import com.hsdi.NetMe.network.RestServiceGen;
+import com.hsdi.NetMe.util.AccountInfoUtils;
+import com.hsdi.NetMe.util.DialogUtils;
+import com.hsdi.NetMe.util.PreferenceManager;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+/**
+ * Created by huohong.yi on 2017/3/17.
+ */
+
+public class ChangePwdFragment extends Fragment implements View.OnClickListener{
+
+    @Bind(R.id.et_old_password)
+    EditText etOldPassword;
+    @Bind(R.id.et_new_password)
+    EditText etNewPassword;
+    @Bind(R.id.et_confirm_password)
+    EditText etConfirmPassword;
+    @Bind(R.id.btn_change_pwd_submit)
+    Button btnChangePwdSubmit;
+
+    private IChangePassword changePwdListener;
+    private PreferenceManager manager;
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_change_pwd, container, false);
+        ButterKnife.bind(this, view);
+        manager = PreferenceManager.getInstance(getActivity());
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        btnChangePwdSubmit.setOnClickListener(this);
+
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof IChangePassword){
+            changePwdListener = (IChangePassword) context;
+        }else {
+            throw new RuntimeException(context.toString() + "must implement IChangePwd");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        changePwdListener = null;
+    }
+
+    @Override
+    public void onClick(View v) {
+        String oldPwd = AccountInfoUtils.checkOldPassword(getActivity(),etOldPassword);
+        final String newPwd = AccountInfoUtils.checkPassword(getActivity(),etNewPassword,etConfirmPassword);
+
+        if (!oldPwd.equals(manager.getPassword())){
+            DialogUtils.getErrorDialog(getActivity(),"oldPassword is uncorrect").show();
+            return;
+        }
+        if (oldPwd.equals(newPwd)){
+            DialogUtils.getErrorDialog(getActivity(),"oldPassword and newPassword can not be the same").show();
+            return;
+        }
+
+        if (oldPwd != null && newPwd != null ){
+
+            Log.e("yi", "ChangePwdFragment:onClick:=================================== email = " + manager.getEmail()+",password = " + oldPwd + ",newPassword = "+ newPwd );
+            //显示进度对话框
+            final ProgressDialog progressDialog = DialogUtils.getProgressDialog(getActivity());
+            progressDialog.show();
+            //开始请求
+            RestServiceGen.getUnCachedService()
+                    .userChangePassword(manager.getEmail(),oldPwd,newPwd)
+                    .enqueue(new Callback<BaseResponse>() {
+                        @Override
+                        public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                            if (progressDialog != null){
+                                progressDialog.dismiss();
+                            }
+                            if (response == null || response.body() == null) {
+                                DialogUtils.getErrorDialog(
+                                        getActivity(),
+                                        R.string.error_connection
+                                ).show();
+                                return;
+                            }
+                            BaseResponse baseResponse = response.body();
+                            Log.e("yi", "onResponse:======================================= baseResponse = "+ baseResponse.toString());
+                            if ( response.body()!=null && response.body().isSuccess()){
+                                manager.setPassword(newPwd);
+                                changePwdListener.onChangeSuccess();
+                            }
+                            else {
+                                changePwdListener.onChangeFailed();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<BaseResponse> call, Throwable t) {
+                            if (progressDialog != null){
+                                progressDialog.dismiss();
+                            }
+                            // if here, assuming connection error
+                            DialogUtils.getErrorDialog(getActivity(), R.string.error_connection).show();
+                        }
+                    });
+        }
+    }
+}

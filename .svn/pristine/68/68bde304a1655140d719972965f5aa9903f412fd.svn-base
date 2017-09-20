@@ -1,0 +1,517 @@
+package com.hsdi.NetMe.ui.startup;
+
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
+
+import com.google.i18n.phonenumbers.Phonenumber;
+import com.hsdi.NetMe.BuildConfig;
+import com.hsdi.NetMe.NetMeApp;
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.models.response_models.PinRequestResponse;
+import com.hsdi.NetMe.network.GCMRegisterTask;
+import com.hsdi.NetMe.network.RestServiceGen;
+import com.hsdi.NetMe.network.SmsPinListener;
+import com.hsdi.NetMe.ui.main.MainActivity;
+import com.hsdi.NetMe.ui.startup.phone_verification.BackHandlerHelper;
+import com.hsdi.NetMe.ui.startup.phone_verification.PRCommunications;
+import com.hsdi.NetMe.ui.startup.phone_verification.PhoneEntryFragment;
+import com.hsdi.NetMe.ui.startup.phone_verification.PinEntryFragment;
+import com.hsdi.NetMe.util.DeviceUtils;
+import com.hsdi.NetMe.util.DialogUtils;
+import com.hsdi.NetMe.util.PreferenceManager;
+import com.hsdi.NetMe.util.RootUtils;
+import com.hsdi.theme.basic.BaseThemeActivity;
+
+import java.util.ArrayList;
+import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import za.co.riggaroo.materialhelptutorial.TutorialItem;
+import za.co.riggaroo.materialhelptutorial.tutorial.MaterialTutorialActivity;
+
+public class PhoneRetrievalActivity extends BaseThemeActivity implements PRCommunications, FragmentManager.OnBackStackChangedListener {
+    private static final String TAG = PhoneRetrievalActivity.class.getSimpleName();
+
+    private static final int REQUEST_CODE_TUTORIAL = 4444;
+
+
+    private final String countryCodeKey = "countryCodeKey";
+    private final String callingCodeKey = "callingCodeKey";
+    private final String phoneNumberKey = "PhoneNumberKey";
+    private static String userCountryCode = null;
+    private static String userCallingCode = null;
+    private static String userPhoneNumber = null;
+
+    public static final String UserPinKey = "UPinKey";
+    private final String ServerPinKey = "SPinKey";
+    private static String userPin = null;
+    private static String serverPin = null;
+    private static boolean userExits = false;
+
+    private BroadcastReceiver smsListener = null;
+    private PreferenceManager manager;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        getSupportFragmentManager().addOnBackStackChangedListener(this);
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_phone_retrieval);
+
+        // this is here for the case when the application is closed or placed in the background
+        //   the user selected to have the application read the pin from the sms.
+        // this will be called and the pin will be validated
+        onNewIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        Log.d(TAG, "received new Intent");
+
+        if (intent.getExtras() != null)
+            setPin(null, intent.getExtras().getString(UserPinKey, null));
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        manager = NetMeApp.getInstance().getPrefManager();
+
+        // don't let the application continue if the device is rooted
+        if (!BuildConfig.DEBUG && RootUtils.isDeviceRooted(this)) {
+            Log.d(TAG, "device is rooted. Showing the dialog and exiting!");
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.error)
+                    .setMessage(R.string.error_rooted)
+                    .setCancelable(false)
+                    .setNeutralButton(
+                            R.string.ok,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                    PhoneRetrievalActivity.this.finish();
+                                }
+                            }
+                    ).show();
+        }
+        //make sure the application has been given access to phone state before continuing, needed for device id
+        else if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.permission_request_title)
+                    .setMessage(R.string.permission_read_phone_state_rationale)
+                    .setNeutralButton(
+                            R.string.ok,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+
+                                    ActivityCompat.requestPermissions(
+                                            PhoneRetrievalActivity.this,
+                                            new String[]{Manifest.permission.READ_PHONE_STATE},
+                                            0
+                                    );
+                                }
+                            }
+                    )
+                    .show();
+        } else if (!manager.initialTutorialShown()) showTutorial();
+        else if (manager.haveUsername() && manager.userLoginRemembered() && !manager.getLoginStatus()) {
+            manager.setSkipTutorialShown();
+            Log.i("yuyong_phone", String.format("goToLogin:--->%s--->%s ", manager.userLoginRemembered(), manager.getLoginStatus()));
+            goToLogin();
+        }
+        // if the user's number has already been obtained, continue to the login activity
+        else if (manager.haveUsername() && manager.userLoginRemembered()) {
+            manager.setSkipTutorialShown();
+            Log.i("yuyong_phone", String.format("goToMain:--->%s--->%s ", manager.userLoginRemembered(), manager.getLoginStatus()));
+            goToMain();
+        } else if (manager.haveUsername()) {
+            manager.setSkipTutorialShown();
+            Log.i("yuyong_phone", String.format("goToLogin:--->%s--->%s ", manager.userLoginRemembered(), manager.getLoginStatus()));
+            goToLogin();
+        }
+        //the phone isn't rooted so continue and show the corresponding fragment
+        //place the phone entry fragment
+        else if (serverPin == null) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.pr_fragment_holder, new PhoneEntryFragment(), new PhoneEntryFragment().getClass().getName())
+                    .addToBackStack(null)
+                    .commit();
+        } else {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.pr_fragment_holder, new PinEntryFragment(), new PinEntryFragment().getClass().getName())
+                    .addToBackStack(null)
+                    .commit();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!BackHandlerHelper.handleBackPress(this)) {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            Log.i("yuyong_smsPin", "onDestroy: unregisterReceiver(smsListener) " );
+            this.unregisterReceiver(smsListener);
+        } catch (Exception ignore) {
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString(countryCodeKey, userCountryCode);
+        outState.putString(callingCodeKey, userCallingCode);
+        outState.putString(phoneNumberKey, userPhoneNumber);
+
+        if (serverPin != null ^ userPin != null) {
+            outState.putString(ServerPinKey, serverPin);
+            outState.putString(UserPinKey, userPin);
+        } else {
+            outState.putString(ServerPinKey, null);
+            outState.putString(UserPinKey, null);
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        userCountryCode = savedInstanceState.getString(countryCodeKey, null);
+        userCallingCode = savedInstanceState.getString(callingCodeKey, null);
+        userPhoneNumber = savedInstanceState.getString(phoneNumberKey, null);
+        serverPin = savedInstanceState.getString(ServerPinKey, null);
+        userPin = savedInstanceState.getString(UserPinKey, null);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_TUTORIAL) {
+            NetMeApp.getInstance().getPrefManager().setInitialTutorialShown();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        // in either case (sms read access granted or not) the verification request is to be sent
+        if (permissions[0].equals(Manifest.permission.READ_SMS)) performPhoneVerification();
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Shows the tutorial
+     */
+    public void showTutorial() {
+        Intent mainAct = new Intent(this, MaterialTutorialActivity.class);
+        mainAct.putParcelableArrayListExtra(
+                MaterialTutorialActivity.MATERIAL_TUTORIAL_ARG_TUTORIAL_ITEMS,
+                getTutorialItems()
+        );
+        startActivityForResult(mainAct, REQUEST_CODE_TUTORIAL);
+    }
+
+    /**
+     * Get all the items to show on the tutorial
+     */
+    private ArrayList<TutorialItem> getTutorialItems() {
+        TutorialItem tutorialItem1 = new TutorialItem(
+                getString(R.string.initial_page_1_title),
+                getString(R.string.initial_page_1_description),
+                R.color.primary_accent,
+                R.drawable.launcher
+        );
+
+        TutorialItem tutorialItem2 = new TutorialItem(
+                getString(R.string.initial_page_2_title),
+                getString(R.string.initial_page_2_description),
+                R.color.primary_dark,
+                R.drawable.ringing_phone_web
+        );
+
+        ArrayList<TutorialItem> tutorialItems = new ArrayList<>();
+        tutorialItems.add(tutorialItem1);
+        tutorialItems.add(tutorialItem2);
+
+        return tutorialItems;
+    }
+
+    /**
+     * Verifies that the the pin returned in the http response and the one received from the text
+     * message are the same.
+     */
+    public void verifyPin() {
+        Log.d("yuyong_phone", "verifying: server pin = " + serverPin + " and user pin = " + userPin);
+        if (serverPin == null && userPin != null){
+            DialogUtils.getErrorDialog(PhoneRetrievalActivity.this, R.string.error_null_serverPin).show();
+            userPin = null;
+            return;
+        }
+        // if either pin is null, both pins haven't been received yet
+        if (serverPin == null || userPin == null) return;
+
+        final ProgressDialog progressDialog = DialogUtils.getProgressDialog(PhoneRetrievalActivity.this);
+        progressDialog.show();
+        // in the case where the pins are the same save the user number and change to the login activity
+        if (serverPin.equalsIgnoreCase(userPin)) {
+            Log.i("yuyong_phone", "Pin code match verified");
+            Log.d("yuyong_phone", "continuing to getting gcm");
+
+            serverPin = null;
+            userPin = null;
+            new GCMRegisterTask(this, new GCMRegisterTask.Callback() {
+                @Override
+                public void onComplete(Boolean result) {
+                    Log.d("yuyong_phone", "in GCM Callback, result = " + result);
+                    progressDialog.dismiss();
+                    if (result) {
+                        Log.d(TAG, "storing number and continuing to the login activity");
+                        NetMeApp.getInstance().getPrefManager().setUsername(userCountryCode, userCallingCode, userPhoneNumber);
+
+                        if (userExits) {
+                            manager.setSkipTutorialShown();
+                            goToLogin();
+                            Log.d("yuyong_phone", "from pin verification");
+                        } else goToRegister();
+                    } else {
+                        DialogUtils.getErrorDialog(PhoneRetrievalActivity.this, R.string.error_invalid_service).show();
+                    }
+                }
+            }).execute();
+        }
+        // in the case where the pins are not the same, alert the user
+        else {
+            progressDialog.dismiss();
+            serverPin = null;
+            userPin = null;
+            Log.i("yuyong_phone", "verifyPin: user pin is error ");
+            DialogUtils.getErrorDialog(this, R.string.error_invalid_pin).show();
+            // DialogUtils.getErrorDialog(this,"user pin is error").show();
+        }
+    }
+
+    /**
+     * sends a request to the backend to send a pin to the number the user entered and
+     * return the same pin in the response to be able to compare and verify the user's entered
+     * phone number.
+     */
+    public void performPhoneVerification() {
+        Log.i("yuyong_phone", String.format("performPhoneVerification: --->%s--->%s ", userCallingCode, userPhoneNumber));
+        // showing a progress dialog to alert and prevent the user from messing with the screen
+        final ProgressDialog progressDialog = DialogUtils.getProgressDialog(this);
+        progressDialog.show();
+
+        //register sms pin listener
+        IntentFilter smsFilter = new IntentFilter();
+        smsFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
+        smsListener = new SmsPinListener();
+        this.registerReceiver(smsListener, smsFilter);
+
+        // performing the http request
+        RestServiceGen.getUnCachedService()
+                .verifyPhone(
+                        userCallingCode,
+                        userPhoneNumber,
+                        Locale.getDefault().getCountry(),
+                        Locale.getDefault().getLanguage()
+                )
+                .enqueue(new Callback<PinRequestResponse>() {
+                             @Override
+                             public void onResponse(Call<PinRequestResponse> call, Response<PinRequestResponse> response) {
+                                 // dialog is no longer needed
+                                 progressDialog.dismiss();
+
+                                 // storing the pin and switching to the pin entry fragment if I got a good response from the server
+                                 if (response != null && response.body() != null && response.body().isSuccess()) {
+                                     PinRequestResponse verificationResponse = response.body();
+
+                                     //if user does not exist, after pin is verified, goes to register screen
+                                     userExits = verificationResponse.userExists();
+
+                                     // storing the pin returned from the http call
+                                     setPin(verificationResponse.getPin(), null);
+                                     Log.i("yuyong_phone", String.format("performPhoneVerification: --->%s--->%s ", verificationResponse.getPin(), userExits));
+                                     // change to the pin entry screen
+                                     getSupportFragmentManager()
+                                             .beginTransaction()
+                                             .replace(R.id.pr_fragment_holder, new PinEntryFragment(), new PinEntryFragment().getClass().getName())
+                                             .addToBackStack(null)
+                                             .commit();
+                                 }
+                                 // if the response from the server is bad, show an error
+                                 else {
+                                     DialogUtils.getErrorDialog(
+                                             PhoneRetrievalActivity.this,
+                                             R.string.error_server
+                                     ).show();
+                                 }
+                             }
+
+                             @Override
+                             public void onFailure(Call<PinRequestResponse> call, Throwable t) {
+                                 // dialog is no longer needed
+                                 progressDialog.dismiss();
+
+                                 // if the response from the server is bad, show an error
+                                 if (!DeviceUtils.hasInternetConnection(PhoneRetrievalActivity.this)) {
+                                     DialogUtils.getErrorDialog(
+                                             PhoneRetrievalActivity.this,
+                                             R.string.error_connection
+                                     ).show();
+                                 } else {
+                                     DialogUtils.getErrorDialog(
+                                             PhoneRetrievalActivity.this,
+                                             R.string.error_server
+                                     );
+                                 }
+                             }
+                         }
+                );
+    }
+
+    /**
+     * Starts the login activity and finishes this activity
+     */
+    public void goToLogin() {
+        Intent loginIntent = new Intent(this, LoginActivity.class);
+        startActivity(loginIntent);
+        Log.i("yuyong_smsPin", "goToLogin: ");
+        this.finish();
+    }
+
+    /**
+     * Goes to the main activity
+     */
+    private void goToMain() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        Log.i("yuyong_smsPin", "goToMain: ");
+        this.finish();
+    }
+
+    /**
+     * Starts the RegisterActivity and finishes this activity
+     */
+    public void goToRegister() {
+        Intent loginIntent = new Intent(this, RegisterActivity.class);
+        startActivity(loginIntent);
+        this.finish();
+    }
+
+    /**
+     * Stores the entered phone number locally then checks if the user would like the app to read
+     * the SMS verification message or wait for manual input, then start the verification process.
+     *
+     * @param countryCode the country code (+number) the user chose
+     * @param phoneNumber the phone number the user entered
+     */
+    @Override
+    public void setEnteredPhone(String countryCode, Phonenumber.PhoneNumber phoneNumber) {
+        // temporarily setting the country code, calling code, and phone number
+        userCountryCode = countryCode;
+        userCallingCode = String.valueOf(phoneNumber.getCountryCode());
+        userPhoneNumber = String.valueOf(phoneNumber.getNationalNumber());
+        Log.i("yuyong_phone", String.format("setEnteredPhone: --->%s--->%s ", userCountryCode, userPhoneNumber));
+        // the application permission access has not been granted so show the user why
+        // the sms permission is need. If the permission is accepted denied, send the
+        // http verification request
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.permission_request_title)
+                    .setMessage(R.string.permission_read_sms_rationale)
+                    .setPositiveButton(
+                            R.string.ok,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    ActivityCompat.requestPermissions(
+                                            PhoneRetrievalActivity.this,
+                                            new String[]{Manifest.permission.READ_SMS},
+                                            0
+                                    );
+                                }
+                            }
+                    )
+                    .setNegativeButton(
+                            R.string.cancel,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    performPhoneVerification();
+                                }
+                            }
+                    )
+                    .show();
+        }
+        // the application has already been granted permission to read the sms
+        // so just perform the request
+        else performPhoneVerification();
+    }
+
+    /**
+     * Updates the local user and server pins, then verification is requested.
+     *
+     * @param newServerPin the pin to use as the server pin
+     * @param newUserPin   the pin to use as the user entered/received pin
+     */
+    @Override
+    public void setPin(String newServerPin, String newUserPin) {
+        // setting the server pin, if passed string is valid
+        if (newServerPin != null && !newServerPin.isEmpty()) {
+            Log.d("yuyong_phone", "setting server pin to " + newServerPin);
+            serverPin = newServerPin;
+        }
+
+        // setting the user pin, if passed string is valid
+        if (newUserPin != null && !newUserPin.isEmpty()) {
+            Log.d("yuyong_phone", "setting user pin to " + newUserPin);
+            userPin = newUserPin;
+        }
+
+        // every time any pin is changed, perform a check in case the other pin has already been set
+        verifyPin();
+    }
+
+    @Override
+    public void onBackStackChanged() {
+        //Toast.makeText(this, "返回堆状态发生改变", Toast.LENGTH_SHORT).show();
+    }
+
+
+}

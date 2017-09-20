@@ -1,0 +1,636 @@
+package com.hsdi.NetMe.ui.chat.text.text_helpers;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.hsdi.NetMe.NetMeApp;
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.models.Contact;
+import com.hsdi.NetMe.models.ManagedMessage;
+import com.hsdi.NetMe.models.Media;
+import com.hsdi.NetMe.models.Participant;
+import com.hsdi.NetMe.ui.chat.text.helper_activities.ViewLocationActivity;
+import com.hsdi.NetMe.ui.chat.util.OnMessageClickListener;
+import com.hsdi.NetMe.util.CircleTransformation;
+import com.hsdi.NetMe.util.MyLog;
+import com.hsdi.NetMe.util.PreferenceManager;
+import com.squareup.picasso.Picasso;
+
+import java.util.Locale;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+class TextMsgHolder extends RecyclerView.ViewHolder implements OnMapReadyCallback {
+
+    private final RelativeLayout mainView;
+    private final LayoutInflater inflater;
+    private ManagedMessage message;
+
+    private MapView mapView;
+    private GoogleMap map;
+    private LatLng location;
+    private Context mContext;
+
+    private final View.OnClickListener onAvatarClickListener;
+    private final View.OnClickListener onClickListener;
+    private final View.OnLongClickListener onLongClickListener;
+
+    @Bind(R.id.chat_avatar)         ImageView avatar;
+    @Bind(R.id.chat_avatar_letter)  TextView avatarLetter;
+    @Bind(R.id.chat_content)        LinearLayout container;
+    @Bind(R.id.chat_name)           TextView name;
+    @Bind(R.id.chat_time)           TextView time;
+
+    TextMsgHolder(LayoutInflater inflater, RelativeLayout itemView, final OnMessageClickListener listener) {
+        super(itemView);
+        ButterKnife.bind(this, itemView);
+
+        this.mainView = itemView;
+        this.inflater = inflater;
+        this.mContext = itemView.getContext();
+
+        onAvatarClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listener.onAvatarClicked(message.getSenderUsername());
+            }
+        };
+
+        /*TODO figure out how this will work for multiple media items*/
+        onClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listener.onClick(message);
+            }
+        };
+
+        onLongClickListener = new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return listener.onLongClicked(container, message);
+            }
+        };
+    }
+
+    /**
+     * Update this holder to show the new information for the message
+     * @param manMsg         the managed message to show
+     * @param participant    the chat participant who sent this message
+     * */
+    public void bind(ManagedMessage manMsg, Participant participant) {
+        this.message = manMsg;
+        mainView.setTag(message);
+        Log.i("yuyong_profile", String.format("bind:manMsg = %s , participant = %s ",manMsg,participant));
+        resetViews();
+
+        //this message was sent from another user, so adjust accordingly
+        if(message.isFromContact()) {
+            //move the avatar, content, name, and time to the right places
+            setReceivedMessage();
+
+            //get the contact to use for this message
+            Contact contact = NetMeApp.getContactWith(message.getSenderUsername());
+
+            setContactAvatar(contact, participant);
+
+            //setting the name for the contact
+            if (contact != null ){
+                name.setText(contact.getName());
+            }
+            //if there is no contact, use the participant
+            else if (participant != null && !participant.getFullName().trim().isEmpty()) {
+                name.setText(participant.getFullName());
+            }
+            //if both don't exist just use the sender username
+            else {
+                name.setText(message.getSenderUsername());
+            }
+        }
+        //this message was sent by this user, so adjust accordingly
+        else {
+            //move the avatar, content, name, and time to the right places
+            setSentMessage();
+
+            // loading the current user's avatar
+            if(NetMeApp.currentUserHasValidAvatarUrl()) {
+                Picasso.with(avatar.getContext())
+                        .load(NetMeApp.getCurrentUserAvatarUrl())
+                        .transform(CircleTransformation.getTransformation())
+                        .placeholder(R.drawable.empty_avatar)
+                        .into(avatar);
+                avatarLetter.setText("");
+            }
+            else {
+                avatar.setImageResource(R.drawable.empty_avatar);
+                PreferenceManager prefManager = NetMeApp.getInstance().getPrefManager();
+                String firstName = prefManager.getFirstName();
+                String lastName = prefManager.getLastName();
+                String firstInitial = firstName.length() > 0 ? firstName.substring(0,1) : "";
+                String lastInitial = lastName.length() > 0 ? lastName.substring(0,1) : "";
+                String initials = firstInitial + lastInitial;
+                avatarLetter.setText(initials);
+            }
+            //clear the name field, current user doesn't need to see their own name
+            name.setText("");
+        }
+        time.setText(message.getFormattedTime());
+        time.setTextColor(mainView.getContext().getResources().getColor(R.color.secondary_txt));
+
+        setContent();
+    }
+
+    /** Resets the states of all the views and empties out any old message view content */
+    private void resetViews() {
+        // removes listeners for main
+        mainView.setOnClickListener(null);
+        mainView.setOnLongClickListener(null);
+
+        // removes listeners for avatar
+        avatar.setOnClickListener(null);
+        avatar.setOnLongClickListener(null);
+
+        // removes listeners for container
+        container.setOnClickListener(null);
+        container.setOnLongClickListener(null);
+
+        // removes listeners for name
+        name.setOnClickListener(null);
+        name.setOnLongClickListener(null);
+
+        // removes listeners for time
+        time.setOnClickListener(null);
+        time.setOnLongClickListener(null);
+        time.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+
+        // set the mapping stuff to be ready for garbage collection
+        mapView = null;
+        map = null;
+    }
+
+    /** Adjusts all the message parts to be used as a message that was received */
+    private void setReceivedMessage() {
+        //updating avatar layout parameters rules
+        RelativeLayout.LayoutParams avatarParams = (RelativeLayout.LayoutParams) avatar.getLayoutParams();
+        avatarParams.removeRule(RelativeLayout.ALIGN_PARENT_END);
+        avatarParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
+        avatarParams.setMargins(0,0,10,0);
+        mainView.updateViewLayout(avatar, avatarParams);
+
+        //updating container layout parameters rules
+        RelativeLayout.LayoutParams containerParams = (RelativeLayout.LayoutParams) container.getLayoutParams();
+        containerParams.removeRule(RelativeLayout.START_OF);
+        containerParams.addRule(RelativeLayout.END_OF, avatar.getId());
+        containerParams.setMargins(0,0,200,0);
+        mainView.updateViewLayout(container, containerParams);
+
+        //updating name layout parameters rules
+        RelativeLayout.LayoutParams nameParams = (RelativeLayout.LayoutParams) name.getLayoutParams();
+        nameParams.removeRule(RelativeLayout.START_OF);
+        nameParams.addRule(RelativeLayout.ALIGN_START, container.getId());
+        mainView.updateViewLayout(name, nameParams);
+
+        //updating time layout parameters rules
+        RelativeLayout.LayoutParams timeParams = (RelativeLayout.LayoutParams) time.getLayoutParams();
+        timeParams.removeRule(RelativeLayout.ALIGN_END);
+        timeParams.addRule(RelativeLayout.END_OF, name.getId());
+        timeParams.setMargins(40,0,0,0);
+        mainView.updateViewLayout(time, timeParams);
+    }
+
+    /** Adjusts all the message parts to be used as a message that was sent out */
+    private void setSentMessage() {
+        //updating avatar layout parameters rules
+        RelativeLayout.LayoutParams avatarParams = (RelativeLayout.LayoutParams) avatar.getLayoutParams();
+        avatarParams.removeRule(RelativeLayout.ALIGN_PARENT_START);
+        avatarParams.addRule(RelativeLayout.ALIGN_PARENT_END, RelativeLayout.TRUE);
+        avatarParams.setMargins(10,0,0,0);
+        mainView.updateViewLayout(avatar, avatarParams);
+
+        //updating container layout parameters rules
+        RelativeLayout.LayoutParams containerParams = (RelativeLayout.LayoutParams) container.getLayoutParams();
+        containerParams.removeRule(RelativeLayout.END_OF);
+        containerParams.addRule(RelativeLayout.START_OF, avatar.getId());
+        containerParams.setMargins(200,0,0,0);
+        mainView.updateViewLayout(container, containerParams);
+
+        //updating name layout parameters rules
+        RelativeLayout.LayoutParams nameParams = (RelativeLayout.LayoutParams) name.getLayoutParams();
+        nameParams.removeRule(RelativeLayout.ALIGN_START);
+        nameParams.addRule(RelativeLayout.START_OF, name.getId());
+        mainView.updateViewLayout(name, nameParams);
+
+        //updating time layout parameters rules
+        RelativeLayout.LayoutParams timeParams = (RelativeLayout.LayoutParams) time.getLayoutParams();
+        timeParams.removeRule(RelativeLayout.END_OF);
+        timeParams.addRule(RelativeLayout.ALIGN_END, container.getId());
+        timeParams.setMargins(0,0,40,0);
+        mainView.updateViewLayout(time, timeParams);
+    }
+
+    /**
+     * Sets the avatar for the contact, either from local or from the sever is local is not available
+     * @param contact        the contact object representing the contact to show
+     * @param participant    the participant object representing the participant object from the server
+     * */
+    private void setContactAvatar(final Contact contact, final Participant participant) {
+        if (participant != null){
+            if(contact != null && contact.getAvatarUri() != null){
+                Log.i("yuyong_profile", String.format("setContactAvatar:AvatarUri = %s ",contact.getAvatarUri()));
+                Picasso.with(avatar.getContext())
+                        .load(contact.getAvatarUri())
+                        .transform(CircleTransformation.getTransformation())
+                        .placeholder(R.drawable.empty_avatar)
+                        .into(avatar);
+                avatarLetter.setText("");
+            }
+            else if (participant.getAvatarUrl() != null && !participant.getAvatarUrl().contains(mContext.getString(R.string.default_avatar))){
+                Log.i("yuyong_profile", String.format("setContactAvatar:participant.getAvatarUrl = %s ",participant.getAvatarUrl()));
+                Picasso.with(avatar.getContext())
+                        .load(participant.getAvatarUrl())
+                        .transform(CircleTransformation.getTransformation())
+                        .placeholder(R.drawable.empty_avatar)
+                        .into(avatar);
+                avatarLetter.setText("");
+            }
+            else {
+                Log.i("yuyong_profile", String.format("setContactAvatar:"));
+                avatar.setImageResource(R.drawable.empty_avatar);
+                if(contact != null) avatarLetter.setText(contact.getInitials());
+                else if(participant != null) avatarLetter.setText(participant.getInitials());
+                else avatarLetter.setText("");
+            }
+        } else {
+            Log.i("yuyong_profile", String.format("setContactAvatar: participant == null"));
+            avatar.setImageResource(R.drawable.empty_avatar);
+        }
+      /*  //if the contact has a local picture
+        if(contact != null && contact.getAvatarUri() != null) {
+            Log.i("yuyong_profile", String.format("setContactAvatar:AvatarUri = %s ",contact.getAvatarUri()));
+            Picasso.with(avatar.getContext())
+                    .load(contact.getAvatarUri())
+                    .transform(CircleTransformation.getTransformation())
+                    .placeholder(R.drawable.empty_avatar)
+                    .into(avatar);
+
+            avatarLetter.setText("");
+        }
+        *//*else if(contact != null && contact.hasValidAvatarUrl(avatar.getContext())) {
+            Log.i("yuyong_profile", String.format("setContactAvatar:getAvatarUrl = %s ",contact.getAvatarUrl()));
+            Picasso.with(avatar.getContext())
+                    .load(contact.getAvatarUrl())
+                    .transform(CircleTransformation.getTransformation())
+                    .placeholder(R.drawable.empty_avatar)
+                    .into(avatar);
+
+            avatarLetter.setText("");
+        }*//*
+        else if(participant != null && participant.hasValidAvatarUrl(avatar.getContext())) {
+            Log.i("yuyong_profile", String.format("setContactAvatar:participant.getAvatarUrl = %s ",participant.getAvatarUrl()));
+            Picasso.with(avatar.getContext())
+                    .load(participant.getAvatarUrl())
+                    .transform(CircleTransformation.getTransformation())
+                    .placeholder(R.drawable.empty_avatar)
+                    .into(avatar);
+
+            avatarLetter.setText("");
+        }
+        else {
+            Log.i("yuyong_profile", String.format("setContactAvatar:= "));
+            avatar.setImageResource(R.drawable.empty_avatar);
+            if(contact != null) avatarLetter.setText(contact.getInitials());
+            else if(participant != null) avatarLetter.setText(participant.getInitials());
+            else avatarLetter.setText("");
+        }*/
+        avatar.setOnClickListener(onAvatarClickListener);
+    }
+
+    /** Determines the state of the message and updates the content view accordingly */
+    private void setContent() {
+        //fully clear the container
+        container.removeAllViews();
+        container.setOnClickListener(null);
+        container.setOnLongClickListener(null);
+
+        //fill container depending on the status
+        switch (message.getOverallStatus()) {
+            case ManagedMessage.STATUS_FAILED:
+                // failed to send so alert the user and add retry
+                MyLog.writeLog("OkHttp","setContent===============================");
+                if (message.getType() == ManagedMessage.TYPE_SENT) setFailedSendView();
+                // failed to load so alert the user and add retry
+                else setFailedLoadView();
+                break;
+
+            case ManagedMessage.STATUS_IN_PROGRESS:
+                // if the message is being sent, replace the time with "sending..." and continue to show the content
+                if (message.getType() == ManagedMessage.TYPE_SENT) {
+                    setContentView();
+                    time.setText(R.string.sending);
+                    time.setTextColor(mainView.getContext().getResources().getColor(R.color.secondary_txt));
+                }
+                // if loading, show loading stuff
+                else setLoadingView();
+                break;
+
+            case ManagedMessage.STATUS_READY:
+                // if the message is ready, show content
+                setContentView();
+                break;
+
+            case ManagedMessage.STATUS_NONE:
+            default:
+                setGeneralErrorView();
+        }
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /** Determine what type of content the message contains and loads it into the message content view */
+    private void setContentView() {
+        //if the message has media, add it first
+        if(message.hasDecryptedMedia()) {
+            for(Media media : message.getDecryptedMedia()) {
+                switch (media.getType()) {
+                    case Media.TYPE_IMAGE:
+                        Log.i("yuyong", String.format("setContentView ====> %s ====> %s",media.getUri(),media.getBitmap()+""));
+                        addImageView(media.getBitmap());
+                        return; /*TODO change these to breaks when the default "[attachment 1]" is no longer used*/
+
+                    case Media.TYPE_LOCATION:
+                        addLocationView(media.getLocation());
+                        return;
+
+                    case Media.TYPE_AUDIO:
+                    case Media.TYPE_INVALID:
+                    case Media.TYPE_VIDEO:
+                    case Media.TYPE_VOICE:
+                    case Media.TYPE_FILE:
+                        addTextView(media.getFileName(), true);
+                        return;
+                }
+            }
+        }
+
+        //if the message has a text portion, add it at the end
+        if(message.hasDecryptedText()) addTextView(message.getDecryptedText(), false);
+    }
+
+    /** Sets a progress bar to represent that a message is being loaded */
+    private void setLoadingView() {
+        //create the loading progress bar to show
+        ProgressBar progressBar = new ProgressBar(mainView.getContext());
+        progressBar.setIndeterminate(true);
+
+        //add the progress bar to the container
+        container.addView(progressBar);
+
+        //replacing the time with "loading..." until
+        time.setText(R.string.loading);
+       // time.setText("fffffffffffffffffffffff");
+        time.setTextColor(mainView.getContext().getResources().getColor(R.color.secondary_txt));
+    }
+
+    /** Sets the message to show an error message about failing to send a message, offers a retry option */
+    @SuppressWarnings("deprecation")
+    private void setFailedSendView() {
+        setContentView();
+        MyLog.writeLog("OkHttp","setFailedSendView********************************************");
+        time.setOnClickListener(onClickListener);
+        time.setOnLongClickListener(onLongClickListener);
+
+        time.setText(R.string.error_send);
+        time.setTextColor(mainView.getContext().getResources().getColor(R.color.error));
+        time.setCompoundDrawablesWithIntrinsicBounds(R.drawable.missed_call, 0, 0, 0);
+    }
+
+    /** Sets the message to show an error message about failing to load, offers a retry option */
+    @SuppressWarnings("deprecation")
+    private void setFailedLoadView() {
+        TextView failedLoadView = new TextView(mainView.getContext());
+        failedLoadView.setText(R.string.error_load_message);
+        failedLoadView.setTextColor(mainView.getContext().getResources().getColor(R.color.error));
+        failedLoadView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.missed_call, 0, 0, 0);
+
+        //set the retry listeners
+        failedLoadView.setOnClickListener(onClickListener);
+        failedLoadView.setOnLongClickListener(onLongClickListener);
+        time.setOnClickListener(onClickListener);
+        time.setOnLongClickListener(onLongClickListener);
+
+        //adding view to container
+        container.addView(failedLoadView);
+
+        time.setText("");
+    }
+
+    /** Sets the main content to be a general error message */
+    @SuppressWarnings("deprecation")
+    private void setGeneralErrorView() {
+        //create the error message view
+        TextView errorView = new TextView(mainView.getContext());
+        errorView.setText(R.string.error_unexpected_message);
+        errorView.setTextColor(mainView.getContext().getResources().getColor(R.color.error));
+
+        //adding the progress bar to the container
+        container.addView(errorView);
+
+        //clear the time
+        time.setText("");
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Adds a text view to the message content container with the text message
+     * @param textMsg    the message to show
+     * @param isFile     whether to make the message look like a file link
+     * */
+    @SuppressWarnings("deprecation")
+    private void addTextView(String textMsg, boolean isFile) {
+        View msgBubbleView;
+
+        // get the correct layout
+        if(message.isFromContact()) {
+            msgBubbleView = inflater.inflate(R.layout.item_message_received_text, container, false);
+        }
+        else if (message.getOverallStatus() == ManagedMessage.STATUS_FAILED) {
+            msgBubbleView = inflater.inflate(R.layout.item_message_sent_failed_text, container, false);
+        }
+        else msgBubbleView = inflater.inflate(R.layout.item_message_sent_text, container, false);
+
+        // set the message
+        TextView textView = (TextView) msgBubbleView.findViewById(R.id.message_text);
+        // for normal text message
+        if(!isFile) textView.setText(textMsg);
+        // for voice file messages
+        else if(textMsg.contains(".voice.")) {
+            textView.setText(mainView.getContext().getString(R.string.voice_message));
+            textView.setTextColor(mainView.getResources().getColor(R.color.link_txt));
+            textView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.play_msg_icon, 0, 0, 0);
+            textView.setCompoundDrawablePadding(20);
+        }
+        // for any other type of file message
+        else {
+            textView.setText(textMsg);
+            textView.setTextColor(mainView.getResources().getColor(R.color.link_txt));
+            textView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.attachment_icon, 0, 0, 0);
+            textView.setCompoundDrawablePadding(20);
+        }
+
+        msgBubbleView.setOnClickListener(onClickListener);
+        msgBubbleView.setOnLongClickListener(onLongClickListener);
+
+        // add to the container
+        container.addView(msgBubbleView);
+    }
+
+    /**
+     * Adds an {@link ImageView} as the main content and loads the bitmap into it
+     * @param image    the image to load into the view
+     * */
+/*TODO maybe make all these be created on a background thread that returns a list of views that get added on the main thread*/
+    private void addImageView(Bitmap image) {
+//        Log.i("yuyong", String.format("addImageView 1 ====> %d",image.hashCode()));
+        // creating image view
+        ImageView imageView = new ImageView(mainView.getContext());
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0,0,0,0);
+        imageView.setLayoutParams(params);
+        imageView.setPadding(0,0,0,0);
+        imageView.setAdjustViewBounds(true);
+        imageView.setMaxHeight(Media.MAX_IMAGE_DIMEN);
+
+      //  Log.i("yuyong", String.format("addImageView 2 ====> %d",image.hashCode()));
+        // setting content image and click listeners
+        imageView.setImageBitmap(image);
+        imageView.setOnClickListener(onClickListener);
+        imageView.setOnLongClickListener(onLongClickListener);
+
+        // adding to the screen
+        container.addView(imageView);
+    }
+
+    /**
+     * Adds a map as the main content view for the message and starts it's setup process
+     * @param location    the location to show
+     * */
+    private void addLocationView(LatLng location) {
+        this.location = location;
+
+        // initializing the map
+        mapView = (MapView) inflater.inflate(R.layout.item_message_location, container, false);
+        mapView.onCreate(null);
+        mapView.getMapAsync(this);
+
+        // setting the passed location
+        if (location != null && map != null) setMapLocation(map, location);
+
+        // adding to container
+        container.addView(mapView);
+    }
+
+
+//--------------------------------------- Map Methods ----------------------------------------------
+
+
+    /**
+     * Callback method which is called when the visible google maps is ready to be setup
+     * @param googleMap    an instance of google maps
+     * */
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        MapsInitializer.initialize(NetMeApp.getInstance().getApplicationContext());
+        map = googleMap;
+
+        if (location != null) {
+            // Add a marker for this item and set the camera
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 13f));
+            map.addMarker(new MarkerOptions().position(location));
+
+            // Set the map type back to normal.
+            map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+            map.getUiSettings().setMapToolbarEnabled(false);
+
+            map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                @Override
+                public void onMapClick(LatLng latLng2) {
+                    if(isGoogleMapsInstalled()){
+                        Log.i("msgr","google maps is installed");
+                        String uri = String.format(
+                                Locale.ENGLISH,
+                                "geo:%f,%f?q=%f,%f",
+                                location.latitude,
+                                location.longitude,
+                                location.latitude,
+                                location.longitude
+                        );
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                        mainView.getContext().startActivity(intent);
+                    }
+                    else {
+                        Log.i("msgr","google maps is not installed");
+                        Intent intent = new Intent(mainView.getContext(), ViewLocationActivity.class);
+                        intent.putExtra(ViewLocationActivity.EXTRA_LATLNG, location);
+                        mainView.getContext().startActivity(intent);
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Checks if the Google Maps Application is installed
+     * @return {@<code>true</code>) if installed, {@<code>false</code>} otherwise
+     * */
+    private boolean isGoogleMapsInstalled() {
+        try {
+            mainView.getContext()
+                    .getPackageManager()
+                    .getApplicationInfo("com.google.android.apps.maps", 0);
+
+            return true;
+        }
+        catch(PackageManager.NameNotFoundException e) {return false;}
+    }
+
+    /**
+     * Moves the map and the adds a pin to the location
+     * @param map       an instance of the visible map
+     * @param latLng    the location
+     * */
+    private void setMapLocation(GoogleMap map, final LatLng latLng) {
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 13f));
+        map.addMarker(new MarkerOptions().position(latLng));
+
+        // Set the map type back to normal.
+        map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        map.getUiSettings().setMapToolbarEnabled(false);
+    }
+}

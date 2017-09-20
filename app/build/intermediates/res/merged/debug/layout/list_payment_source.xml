@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/padding_10dp"
+        android:paddingBottom="@dimen/padding_10dp"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/rlPaymentSource"
+    android:background="@color/white">
+    <ImageView android:layout_width="@dimen/padding_30dp"
+        android:layout_height="@dimen/padding_30dp"
+        android:src="@drawable/credit_card"
+        android:id="@+id/ivCreditCardLogo"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="@dimen/padding_10dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignBottom="@+id/tvCardType"
+        android:layout_alignTop="@+id/tvCardType"/>
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="VISA"
+            android:id="@+id/tvCardType"
+            android:textColor="@color/black"
+            android:textSize="@dimen/smallFontSize"
+            android:padding="@dimen/padding_10dp"
+            app:fontFamily="roboto"
+            app:textWeight="normal"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@+id/ivCreditCardLogo" />
+
+        <com.devspark.robototextview.widget.RobotoTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="**** **** **** 0000"
+            android:id="@+id/tvCardNo"
+            android:textSize="@dimen/smallFontSize"
+            android:textColor="@color/black"
+            android:layout_alignTop="@+id/tvCardType"
+            android:layout_alignBottom="@+id/tvCardType"
+            android:layout_marginLeft="@dimen/padding_10dp"
+            android:gravity="right"
+            android:layout_toRightOf="@+id/tvCardType"
+            android:layout_toLeftOf="@+id/ivDropDownIcon"
+            android:textAllCaps="true"
+            android:padding="@dimen/padding_5dp"
+            app:fontFamily="roboto"
+            app:textWeight="normal"
+            android:layout_toStartOf="@+id/ivDropDownIcon" />
+
+
+    <ImageView android:layout_width="@dimen/padding_30dp"
+        android:layout_height="@dimen/padding_30dp"
+        android:src="@mipmap/down_arrow_ico"
+        android:id="@+id/ivDropDownIcon"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignBottom="@+id/tvCardType"
+        android:layout_alignTop="@+id/tvCardType"
+        android:layout_alignEnd="@+id/tvCardType"
+        android:foregroundGravity="center"/>
+    </RelativeLayout>

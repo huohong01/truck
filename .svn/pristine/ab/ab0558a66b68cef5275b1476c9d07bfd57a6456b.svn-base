@@ -1,0 +1,48 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.hsdi.NetMe.ui.startup.recovery.RecoverySuccessFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/primary">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="50dp"
+        android:text="@string/success"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_extra_large"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:gravity="center"
+        android:text="@string/change_pwd_success_top_message"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_medium"/>
+
+    <ImageView
+        android:id="@+id/change_pwd_success_check"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:layout_marginStart="80dp"
+        android:layout_marginEnd="80dp"
+        android:layout_marginTop="20sp"
+        android:src="@drawable/check_icon"
+        android:tint="@color/primary_dark"/>
+
+    <TextView
+        android:id="@+id/change_success_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="40dp"
+        android:layout_gravity="center"
+        android:text="@string/recovery_success_return"
+        android:textColor="@color/primary_txt_inverse"
+        android:textSize="@dimen/text_medium"/>
+</LinearLayout>

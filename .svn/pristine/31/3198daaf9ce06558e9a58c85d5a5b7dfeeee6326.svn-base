@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="tab_indicator" type="color">@color/primary_dark</item>
+
+    <!-- main theme -->
+    <item name="primary" type="color">#FFF8E1</item>
+    <item name="primary_dark" type="color">#FF6F00</item>
+    <item name="primary_accent" type="color">#FFAA1A</item>
+    <item name="background" type="color">#FFFFFF</item>
+    <item name="error" type="color">@android:color/holo_red_dark</item>
+    <item name="failed_text_msg" type="color">#90A4AE</item>
+
+    <!-- text -->
+    <color name="primary_txt" type="color">#212121</color>
+    <color name="primary_txt_inverse" type="color">#000000</color>
+    <color name="secondary_txt" type="color">#777777</color>
+    <color name="secondary_txt_inverse" type="color">@color/primary</color>
+    <color name="link_txt" type="color">#0046F3</color>
+    <color name="registered_marker" type="color">#4CAF50</color>
+
+    <!-- buttons -->
+    <color name="btn_primary">@color/primary_dark</color>
+    <color name="btn_accent">@color/primary</color>
+    <color name="btn_green">#4CAF50</color>
+    <color name="btn_grey">#757575</color>
+    <color name="btn_red">#C00</color>
+    <color name="btn_blue">#C6F0FF</color>
+
+    <!-- messages screen -->
+    <item name="msg_row_name_read" type="color">#757575</item>
+    <item name="msg_row_name_unread" type="color">#000000</item>
+    <item name="msg_row_content" type="color">#757575</item>
+    <item name="msg_row_time" type="color">#757575</item>
+    <item name="msg_deleted_user" type="color">#AAAAAA</item>
+
+    <item name="pending_media_field" type="color">#FFFFEE</item>
+
+    <!-- sound recorder -->
+    <item name="sound_recorder_accent" type="color">#fd4181</item>
+
+    <color name="tint_filter">#8333</color>
+
+    <color name="divider">#757575</color>
+
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="bgGray">#b3aeaa</color>
+
+    <color name="darkGray">#797979</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <color name="btnBackground">#74c3e3</color>
+</resources>

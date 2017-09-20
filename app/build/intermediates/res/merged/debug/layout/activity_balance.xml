@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_balance"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:context="com.hsdi.MiNitPay.BalanceActivity">
+
+    <ImageView
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_margin="20dp"
+        android:src="@drawable/minit_logo"/>
+
+    <TextView
+        android:id="@+id/tv_account"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="30sp"
+        android:layout_margin="40sp"
+        android:text="account"/>
+
+    <TextView
+        android:id="@+id/tv_balance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="30sp"
+        android:layout_margin="40dp"
+        android:text="Balance"/>
+
+    <Button
+        android:id="@+id/btn_sign_in"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:text="@string/Continue"
+        android:textSize="20sp"
+        android:gravity="center"
+        android:padding="10dp"
+        android:layout_margin="20dp"
+        android:background="@drawable/btn_minitpay_selector"
+        android:textColor="@color/btn_textcolor"
+        android:onClick="CONTINUE"/>
+
+</LinearLayout>

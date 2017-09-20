@@ -1,0 +1,756 @@
+package com.hsdi.NetMe.ui.main;
+
+import android.Manifest;
+import android.app.NotificationManager;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.StringRes;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.SwitchCompat;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
+
+import com.getkeepsafe.taptargetview.TapTarget;
+import com.getkeepsafe.taptargetview.TapTargetSequence;
+import com.hsdi.MinitPay.MinitPayActivity;
+import com.hsdi.NetMe.BaseActivity;
+import com.hsdi.NetMe.NetMeApp;
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.database.DatabaseHelper;
+import com.hsdi.NetMe.models.response_models.BaseResponse;
+import com.hsdi.NetMe.network.RestServiceGen;
+import com.hsdi.NetMe.ui.EulaActivity;
+import com.hsdi.NetMe.ui.ProfileActivity;
+import com.hsdi.NetMe.ui.main.contacts.ContactFragment;
+import com.hsdi.NetMe.ui.main.recent_logs.RecentFragment;
+import com.hsdi.NetMe.ui.main.slidingtab.SlidingTabLayout;
+import com.hsdi.NetMe.ui.startup.ChangePwdActivity;
+import com.hsdi.NetMe.ui.startup.LoginActivity;
+import com.hsdi.NetMe.ui.startup.PhoneRetrievalActivity;
+import com.hsdi.NetMe.ui.startup.ThemeActivity;
+import com.hsdi.NetMe.ui.startup.VersionActivity;
+import com.hsdi.NetMe.util.CircleTransformation;
+import com.hsdi.NetMe.util.DeviceUtils;
+import com.hsdi.NetMe.util.DialogUtils;
+import com.hsdi.NetMe.util.PhoneUtils;
+import com.hsdi.NetMe.util.PreferenceManager;
+import com.squareup.picasso.Picasso;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static com.hsdi.theme.basic.ThemeLayoutInflaterFactory.ThemeTypeValue.toolbar_overflow_icon;
+
+/**
+ * The main Activity after the initial setup. This holds a tabbed layout, currently with:
+ * message logs, contacts, and favorites.
+ */
+public class MainActivity extends BaseActivity {
+    private static final String TAG = "MainActivity";
+
+    @Bind(R.id.pager)
+    ViewPager viewPager;
+    @Bind(R.id.tabs)
+    SlidingTabLayout slidingTabLayout;
+    @Bind(R.id.pager_toolbar)
+    Toolbar toolbar;
+    @Bind(R.id.pager_spinner)
+    Spinner spinner;
+    @Bind(R.id.drawer_layout)
+    DrawerLayout drawer;
+    @Bind(R.id.drawer_avatar)
+    ImageView avatar;
+    @Bind(R.id.drawer_user_name)
+    TextView userName;
+    @Bind(R.id.drawer_user_number)
+    TextView userNumber;
+    @Bind(R.id.do_not_disturb)
+    SwitchCompat doNotDisturb;
+
+    private ArrayAdapter<CharSequence> recentSpinnerAdapter;
+    private ArrayAdapter<CharSequence> contactSpinnerAdapter;
+    private int recentSpinnerPosition = 0;
+    private int contactSpinnerPosition = 0;
+
+    private ActionBarDrawerToggle drawerToggle;
+    private boolean initialContactRequest = true;
+    private MainAdapter pageAdapter;
+    private PreferenceManager manager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+
+        manager = PreferenceManager.getInstance(this);
+
+        setupToolbar();
+        setupDrawer();
+        setupPager();
+
+        /*boolean firstLogin = manager.getFirstLogin();
+        Log.e("yi", "onCreate: =========================== firstLogin = " +  firstLogin );
+        if (firstLogin) {
+            mainSkip.setVisibility(View.GONE);
+        }*/
+
+
+         if (!manager.mainTutorialShown())
+        {
+            startMessageTutorial();
+        }
+
+        doNotDisturb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                manager.setDoNotDisturb(isChecked);
+                Log.i(TAG, "onCheckedChanged: switch is selected " +isChecked);
+            }
+        });
+
+
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        drawerToggle.syncState();
+        getContacts();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        drawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadUser();
+
+        //clears all active notifications since they are represented by the message logs
+        ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).cancelAll();
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        Log.e("yi", "onPostResume: ================================================" );
+
+        // if the tutorial has not already been shown, start it
+       /* if (!manager.mainTutorialShown())
+        {
+            startMessageTutorial();
+        }*/
+    }
+
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // doesn't matter the result because this will check again
+        getContacts();
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+    /**
+     * Builds a target for the for the TapTargetTutorial
+     *
+     * @param view          the view to target
+     * @param titleId       the title string id to use
+     * @param descriptionId the description string id to put under the title
+     */
+    private TapTarget buildTarget(View view, @StringRes int titleId, @StringRes int descriptionId) {
+        return TapTarget
+                .forView(view, getString(titleId), getString(descriptionId))
+                .outerCircleColor(R.color.primary_dark)
+                .targetCircleColor(R.color.primary_accent)
+                .transparentTarget(true)
+                .tintTarget(false)
+                .cancelable(true);
+    }
+
+    /**
+     * Starts a {@link TapTargetSequence}  tutorial for the message tab
+     */
+    private void startMessageTutorial() {
+        // move the view pager to make sure the tutorial starts correctly
+        viewPager.setCurrentItem(0, false);
+
+        // get the first tab
+        View tabView = slidingTabLayout.getTabViews()[0];
+
+        // add the tab and toolbar as the targets
+        new TapTargetSequence(this)
+                .targets(
+                        buildTarget(
+                                tabView,
+                                R.string.main_messages_tab_title,
+                                R.string.main_messages_tab_description
+                        ),
+                        buildTarget(
+                                toolbar,
+                                R.string.main_messages_toolbar_title,
+                                R.string.main_messages_toolbar_description
+                        )
+                )
+                .continueOnCancel(true)
+                .listener(new TapTargetSequence.Listener() {
+                    @Override
+                    public void onSequenceFinish() {
+                        viewPager.setCurrentItem(1, false);
+                        startRecentTutorial();
+                    }
+
+                    @Override
+                    public void onSequenceCanceled(TapTarget lastTarget) {
+                        manager.setMainTutorialShown();
+                        viewPager.setCurrentItem(0);
+                    }
+                })
+                .start();
+    }
+
+    /**
+     * Starts a {@link TapTargetSequence}  tutorial for the recent tab
+     */
+    private void startRecentTutorial() {
+        View tabView = slidingTabLayout.getTabViews()[1];
+        new TapTargetSequence(this)
+                .targets(
+                        buildTarget(
+                                tabView,
+                                R.string.main_recent_tab_title,
+                                R.string.main_recent_tab_description
+                        ),
+                        buildTarget(
+                                toolbar,
+                                R.string.main_recent_toolbar_title,
+                                R.string.main_recent_toolbar_description
+                        )
+                )
+                .continueOnCancel(true)
+                .listener(new TapTargetSequence.Listener() {
+                    @Override
+                    public void onSequenceFinish() {
+                        viewPager.setCurrentItem(2);
+                        startContactTutorial();
+                    }
+
+                    @Override
+                    public void onSequenceCanceled(TapTarget lastTarget) {
+                        manager.setMainTutorialShown();
+                        viewPager.setCurrentItem(0);
+                    }
+                })
+                .start();
+    }
+
+    /**
+     * Starts a {@link TapTargetSequence}  tutorial for the contact tab
+     */
+    private void startContactTutorial() {
+        View tabView = slidingTabLayout.getTabViews()[2];
+        new TapTargetSequence(this)
+                .targets(
+                        buildTarget(
+                                tabView,
+                                R.string.main_contact_tab_title,
+                                R.string.main_contact_tab_description
+                        ),
+                        buildTarget(
+                                toolbar,
+                                R.string.main_contact_toolbar_title,
+                                R.string.main_contact_toolbar_description
+                        )
+                )
+                .continueOnCancel(true)
+                .listener(new TapTargetSequence.Listener() {
+                    @Override
+                    public void onSequenceFinish() {
+                        viewPager.setCurrentItem(3, false);
+                        startFavoriteTutorial();
+                    }
+
+                    @Override
+                    public void onSequenceCanceled(TapTarget lastTarget) {
+                        manager.setMainTutorialShown();
+                        viewPager.setCurrentItem(0);
+                    }
+                })
+                .start();
+    }
+
+    /**
+     * Starts a {@link TapTargetSequence}  tutorial for the favorites tab
+     */
+    private void startFavoriteTutorial() {
+        View tabView = slidingTabLayout.getTabViews()[3];
+        new TapTargetSequence(this)
+                .targets(
+                        buildTarget(
+                                tabView,
+                                R.string.main_favorite_tab_title,
+                                R.string.main_favorite_tab_description
+                        ),
+                        buildTarget(
+                                toolbar,
+                                R.string.main_favorite_toolbar_title,
+                                R.string.main_favorite_toolbar_description
+                        )
+                )
+                .continueOnCancel(true)
+                .listener(new TapTargetSequence.Listener() {
+                    @Override
+                    public void onSequenceFinish() {
+                        manager.setMainTutorialShown();
+                        viewPager.setCurrentItem(0);
+                    }
+
+                    @Override
+                    public void onSequenceCanceled(TapTarget lastTarget) {
+                        manager.setMainTutorialShown();
+                        viewPager.setCurrentItem(0);
+                    }
+                })
+                .start();
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Requests Permission to get the contacts from the device and then gets the NetMeApp to load the list.
+     */
+    private void getContacts() {
+        // check the read_contact permission status
+        int contactPermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS);
+        boolean haveContactPermission = contactPermission == PackageManager.PERMISSION_GRANTED;
+
+        // in the case where permission to read the contacts has not been granted and
+        //   it is the first time asking this session, request for permission
+        if (!haveContactPermission && initialContactRequest) {
+            // after requesting the permissions this is no longer an initial request so update now
+            initialContactRequest = false;
+
+            // request the permissions
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.READ_CONTACTS},
+                    0
+            );
+        }
+        // if permission to read the contacts has been granted, load the contact list
+        else if (haveContactPermission) NetMeApp.loadContactList();
+    }
+
+    /**
+     * Loads the user's information into the drawer fields
+     */
+    private void loadUser() {
+        String name = manager.getFirstName() + " " + manager.getLastName();
+        String phoneNumber = PhoneUtils.formatPhoneNumber(this, NetMeApp.getCurrentUser());
+
+        userName.setText(name);
+        userNumber.setText(phoneNumber == null ? NetMeApp.getCurrentUser() : phoneNumber);
+
+        if (NetMeApp.currentUserHasValidAvatarUrl()) {
+            Picasso.with(this)
+                    .load(NetMeApp.getCurrentUserAvatarUrl())
+                    .placeholder(R.drawable.empty_avatar_user)
+                    .transform(new CircleTransformation())
+                    .into(avatar);
+        } else {
+            avatar.setImageResource(R.drawable.empty_avatar_user);
+            applyTheme(avatar,R.drawable.empty_avatar_user);
+        }
+    }
+
+    /**
+     * Sets up the ViewPager which will hold the screens
+     */
+    private void setupPager() {
+        pageAdapter = new MainAdapter(getSupportFragmentManager());
+        viewPager.setAdapter(pageAdapter);
+        viewPager.setOffscreenPageLimit(3);
+        viewPager.setCurrentItem(0);
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                // Get the current position of the spinner
+                if (spinner.getAdapter().getCount() > 2) {
+                    recentSpinnerPosition = spinner.getSelectedItemPosition();
+                } else contactSpinnerPosition = spinner.getSelectedItemPosition();
+
+                // update the spinner for the new position
+                if (position == 1) {
+                    spinner.setAdapter(recentSpinnerAdapter);
+                    spinner.setSelection(recentSpinnerPosition, false);
+                    spinner.setVisibility(View.VISIBLE);
+                } else if (position == 2) {
+                    spinner.setAdapter(contactSpinnerAdapter);
+                    spinner.setSelection(contactSpinnerPosition, false);
+                    spinner.setVisibility(View.VISIBLE);
+                } else spinner.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+        });
+
+        slidingTabLayout.setCustomTabView(R.layout.item_tab, R.id.detail_title);
+        slidingTabLayout.setViewPager(viewPager);
+      //  slidingTabLayout.setSelectedIndicatorColors(ContextCompat.getColor(this, R.color.tab_indicator));
+        slidingTabLayout.setSelectedIndicatorColors(applyThemeStatusBar(R.color.tab_indicator));
+
+        slidingTabLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.primary));
+       // applyTheme(slidingTabLayout,R.color.primary);
+    }
+
+    /**
+     * Sets up the toolbar to replace the actionbar and to automatically update the spinner in
+     * the toolbar to the correct information.
+     */
+    private void setupToolbar() {
+        toolbar.setTitle("");
+        toolbar.setPopupTheme(R.style.ActionMenu);
+        setSupportActionBar(toolbar);
+
+            //设置overflow，需要最小版本是21
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            toolbar.setOverflowIcon(getDrawable(R.drawable.menu_overflow));
+            applyTheme(toolbar,R.drawable.menu_overflow,toolbar_overflow_icon);
+        }
+
+        // setup the adapters for the spinner
+        recentSpinnerAdapter = ArrayAdapter.createFromResource(
+                this,
+                R.array.spinner_recent,
+                android.R.layout.simple_spinner_item
+        );
+        recentSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        contactSpinnerAdapter = ArrayAdapter.createFromResource(
+                this,
+                R.array.spinner_contact,
+                android.R.layout.simple_spinner_item
+        );
+        contactSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spinner.setAdapter(recentSpinnerAdapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                int page = viewPager.getCurrentItem();
+                Fragment fragment = pageAdapter.getItem(page);
+
+                if (fragment instanceof RecentFragment) {
+                    RecentFragment recentFrag = (RecentFragment) fragment;
+                    if (position == 0) recentFrag.filterType(RecentFragment.FILTER_ALL);
+                    else if (position == 1) recentFrag.filterType(RecentFragment.FILTER_MISSED);
+                    else if (position == 2) recentFrag.filterType(RecentFragment.FILTER_INCOMING);
+                    else if (position == 3) recentFrag.filterType(RecentFragment.FILTER_OUTGOING);
+                } else if (fragment instanceof ContactFragment) {
+                    ContactFragment contactFrag = (ContactFragment) fragment;
+                    contactFrag.filterRegistered(position == 1);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
+    /**
+     * Sets up the drawer to open/close with the toggle and update the "Do Not Disturb" switch to
+     * it's last position.
+     */
+    private void setupDrawer() {
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawerToggle = new ActionBarDrawerToggle(
+                this,
+                drawer,
+                toolbar,
+                R.string.drawer_open,
+                R.string.drawer_close
+        );
+
+        drawer.addDrawerListener(drawerToggle);
+
+        doNotDisturb.setChecked(manager.getDoNotDisturb());
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Click method that toggles the do not disturb setting
+     */
+    public void doNotDisturbClicked(View view) {
+        manager.setDoNotDisturb(doNotDisturb.isChecked());
+    }
+
+    /**
+     * Click method that starts the Profile activity
+     */
+    public void settingsClicked(View view) {
+        Intent intent = new Intent(this, ProfileActivity.class);
+        startActivity(intent);
+    }
+
+    /**
+     * Click method that verifies that the user wishes to switch to use a different phone number
+     * that would need to get re-verified.
+     */
+    public void switchUsersRequested(View view) {
+        drawer.closeDrawers();
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.switch_users))
+                .setMessage(getString(R.string.switch_users_dialog_message))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(
+                        getString(R.string.switch_users),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                performSwitchUserRequest();
+                            }
+                        }
+                )
+                .show();
+    }
+
+    /**
+     * Click method that verifies that the user wishes to sign-out
+     */
+    public void signOutRequested(View view) {
+        drawer.closeDrawers();
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.sign_out))
+                .setMessage(getString(R.string.sign_out_dialog_message))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(
+                        getString(R.string.sign_out),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                performLogoutRequest();
+                            }
+                        }
+                )
+                .show();
+    }
+
+    /**
+     * Start the activity to show the terms of use and privacy policy
+     */
+    public void termsOfUseClicked(View view) {
+        Intent intent = new Intent(this, EulaActivity.class);
+        startActivity(intent);
+    }
+
+    /**
+     * Logs the current user out locally and on the backend, then closes this activity and starts
+     * the login activity for this user. The user won't need to re-verify their number.
+     */
+    private void performLogoutRequest() {
+        final ProgressDialog progressDialog = DialogUtils.getProgressDialog(MainActivity.this);
+        progressDialog.show();
+
+        RestServiceGen.getUnCachedService()
+                .userLogout(
+                        manager.getCountryCallingCode(),
+                        manager.getPhoneNumber(),
+                        manager.getPassword(),
+                        manager.getGCMRegistrationId(),
+                        DeviceUtils.getDeviceId(this),
+                        DeviceUtils.getAppVersion(this),
+                        DeviceUtils.getPlatformVersion()
+                )
+                .enqueue(new Callback<BaseResponse>() {
+                    @Override
+                    public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                        // setting this user as logged out
+                        NetMeApp.setCurrentUserLoggedInStatus(false);
+
+                        boolean logoutStatus = manager.logout();
+                        manager.setLoginStatus(false);
+
+                        // this is no longer needed
+                        progressDialog.dismiss();
+
+                        // starting the login activity before closing this activity
+                        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(intent);
+
+                        // closing the activity after logging out
+                        MainActivity.this.finish();
+                    }
+
+                    @Override
+                    public void onFailure(Call<BaseResponse> call, Throwable t) {
+                        // this is no longer needed
+                        progressDialog.dismiss();
+
+                        // if here assume connection error
+                        DialogUtils.getErrorDialog(MainActivity.this, R.string.error_connection).show();
+                    }
+                });
+    }
+
+    /**
+     * Erases any data that will conflict with another user, logs the user out of the backend,
+     * closes this activity and starts the phone verification activity so another number can be used.
+     */
+    private void performSwitchUserRequest() {
+        final ProgressDialog progressDialog = DialogUtils.getProgressDialog(MainActivity.this);
+        progressDialog.show();
+
+        RestServiceGen.getUnCachedService()
+                .userLogout(
+                        manager.getCountryCallingCode(),
+                        manager.getPhoneNumber(),
+                        manager.getPassword(),
+                        manager.getGCMRegistrationId(),
+                        DeviceUtils.getDeviceId(this),
+                        DeviceUtils.getAppVersion(this),
+                        DeviceUtils.getPlatformVersion()
+                )
+                .enqueue(new Callback<BaseResponse>() {
+                    @Override
+                    public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                        // erasing everything for this user from the device
+                        DatabaseHelper.logoutDatabase(MainActivity.this);
+                        NetMeApp.setCurrentUserLoggedInStatus(false);
+                        manager.setLoginStatus(false);
+                        manager.switchUsers();
+
+                        NetMeApp.resetCurrentStaticUser();
+                        Log.i("hong", "onResponse:manager.getPhoneNumber() = " + manager.getPhoneNumber());
+
+                        // this is no longer needed
+                        progressDialog.dismiss();
+
+                        // starting the phone verification activity before closing this activity
+                        Intent intent = new Intent(MainActivity.this, PhoneRetrievalActivity.class);
+                        startActivity(intent);
+
+                        // closing the activity after logging out
+                        MainActivity.this.finish();
+                    }
+
+                    @Override
+                    public void onFailure(Call<BaseResponse> call, Throwable t) {
+                        // this is no longer needed
+                        progressDialog.dismiss();
+
+                        // if here assume connection error
+                        DialogUtils.getErrorDialog(MainActivity.this, R.string.error_connection).show();
+                    }
+                });
+    }
+
+    //change password
+    public void changePasswordRequested(View view) {
+        drawer.closeDrawers();
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.change_pwd))
+                .setMessage(getString(R.string.change_pwd_dialog_message))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(
+                        getString(R.string.yes),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                Intent intent = new Intent(MainActivity.this, ChangePwdActivity.class);
+                                startActivity(intent);
+                            }
+                        }
+                )
+                .show();
+    }
+
+
+
+
+
+    private void performMinitPayRequest() {
+        Intent intent = new Intent(MainActivity.this, MinitPayActivity.class);
+        startActivity(intent);
+
+    }
+
+    /** Click method that verifies that the user wishes to MiNit Pay */
+    public void minitPayRequested(View view) {
+        drawer.closeDrawers();
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.minit_pay))
+                .setMessage(getString(R.string.minit_pay_dialog_message))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(
+                        getString(R.string.minit_pay),
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                performMinitPayRequest();
+                            }
+                        }
+                )
+                .show();
+
+    }
+
+    /** Click method that verifies that the user wishes to MiNit Pay */
+    public void versionRequested(View view) {
+        drawer.closeDrawers();
+        Intent intent = new Intent(this, VersionActivity.class);
+        startActivity(intent);
+    }
+
+
+    public void changeTheme(View view) {
+        drawer.closeDrawers();
+        Intent intent = new Intent(this, ThemeActivity.class);
+        startActivity(intent);
+    }
+}

@@ -1,0 +1,286 @@
+package com.hsdi.NetMe.ui.main.contacts;
+
+import android.app.SearchManager;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import com.hsdi.NetMe.NetMeApp;
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.models.Contact;
+import com.hsdi.NetMe.models.events.EventContactList;
+import com.hsdi.NetMe.models.events.EventFavorite;
+import com.hsdi.NetMe.models.events.EventRegistrationCheck;
+import com.hsdi.NetMe.ui.ContactListUtils.ContactAdapter;
+import com.hsdi.NetMe.ui.ContactListUtils.OnContactClickListener;
+import com.hsdi.NetMe.ui.contact_detail.ContactDetailActivity;
+import com.hsdi.NetMe.ui.contact_selection.SelectContactsActivity;
+import com.hsdi.NetMe.util.PhoneUtils;
+import com.hsdi.NetMe.util.PreferenceManager;
+import com.hsdi.theme.basic.BaseThemeActivity;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.Arrays;
+import java.util.List;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+import static android.app.Activity.RESULT_OK;
+import static com.hsdi.theme.basic.ThemeLayoutInflaterFactory.ThemeTypeValue.menuitem_icon;
+
+public class ContactFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
+    private static final String TAG = "ContactFrag";
+
+    private static final int REQUEST_CODE_MASS_INVITE = 2000;
+
+    @Bind(R.id.main_swipe_refresh) SwipeRefreshLayout swipeRefreshLayout;
+    @Bind(R.id.main_recycler_view) RecyclerView recyclerList;
+    @Bind(R.id.main_empty_message) TextView emptyMsg;
+
+    private static ContactAdapter recyclerAdapter;
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_main, container, false);
+        ButterKnife.bind(this, v);
+
+        recyclerList.setLayoutManager(new LinearLayoutManager(getActivity()));
+        setHasOptionsMenu(true);
+        EventBus.getDefault().register(this);
+        updateViewMode();
+
+        //setting up swipe to refresh
+        swipeRefreshLayout.setColorSchemeResources(
+                R.color.primary_accent,
+                R.color.primary,
+                R.color.primary_dark,
+                R.color.primary
+        );
+        swipeRefreshLayout.setOnRefreshListener(this);
+
+        if(!NetMeApp.isLoadingContacts()) setupListAdapter();
+
+        return v;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_MASS_INVITE && resultCode == RESULT_OK) {
+            String[] selectedNumbers = data.getStringArrayExtra(SelectContactsActivity.RESULT_CONTACT_NUMBERS);
+
+            // go through all the selected numbers
+            if(selectedNumbers != null && selectedNumbers.length > 0) {
+                String invited = Arrays.toString(selectedNumbers).replace("[","").replace("]","");
+                Log.d(TAG, invited);
+                PhoneUtils.sendInvite(this, invited);
+            }
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_contacts, menu);
+        setupSearchView(menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        ((BaseThemeActivity)getActivity()).applyTheme(menu.findItem(R.id.menu_search),R.drawable.search,menuitem_icon);
+        ((BaseThemeActivity)getActivity()).applyTheme(menu.findItem(R.id.menu_item_refresh),R.drawable.sync,menuitem_icon);
+        ((BaseThemeActivity)getActivity()).applyTheme(menu.findItem(R.id.menu_item_add_contact),R.drawable.add,menuitem_icon);
+        ((BaseThemeActivity)getActivity()).applyTheme(menu.findItem(R.id.menu_item_mass_invite),R.drawable.send_btn,menuitem_icon);
+        super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_add_contact:
+                Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
+                intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
+                startActivity(intent);
+                return true;
+
+            case R.id.menu_item_refresh:
+                onRefresh();
+                return true;
+
+            case R.id.menu_item_mass_invite:
+                Intent inviteIntent = new Intent(getActivity(), SelectContactsActivity.class);
+                inviteIntent.putExtra(
+                        SelectContactsActivity.EXTRA_CONTACT_TYPE,
+                        SelectContactsActivity.NONREGISTERED
+                );
+                startActivityForResult(inviteIntent, REQUEST_CODE_MASS_INVITE);
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        EventBus.getDefault().unregister(this);
+        recyclerAdapter = null;
+        super.onDestroy();
+    }
+
+    @Override
+    public void onRefresh() {
+        swipeRefreshLayout.setRefreshing(true);
+        if(!NetMeApp.isLoadingContacts()) {
+            PreferenceManager.getInstance(getActivity()).resetTimeToCheckContactRegistrations();
+            NetMeApp.loadContactList();
+        }
+    }
+
+
+//--------------------------------------------------------------------------------------------------\
+
+
+    /**
+     * EventBus subscriber method which listens for updates to the favorites list
+     * @param event    the event which contains the updated contact
+     * */
+    @SuppressWarnings("unused")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updateFavorites(EventFavorite event) {
+        if (event != null && recyclerAdapter != null) recyclerAdapter.updateContact(event.getContact());
+    }
+
+    /**
+     * EventBus subscriber method which listens for updates to the contact list
+     * @param eventContactList    the contact update event
+     * */
+    @SuppressWarnings("unused")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updateContacts(EventContactList eventContactList) {
+        updateViewMode();
+        setupListAdapter();
+    }
+
+    /**
+     * EventBus subscriber method which listens for when registered contacts check finished
+     * @param eventRegistrationCheck    the contact registration check finish event
+     * */
+    @SuppressWarnings("unused")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updateRegistered(EventRegistrationCheck eventRegistrationCheck) {
+        updateViewMode();
+        setupListAdapter();
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Update the filtering of registered contacts
+     * @param registeredOnly    {@code TRUE} shows the registered contacts only,
+     *                          {@code FALSE} shows everyone
+     * */
+    public void filterRegistered(boolean registeredOnly) {
+        if(recyclerAdapter != null) recyclerAdapter.filterRegistered(registeredOnly);
+    }
+
+    /**
+     * Sets up the search functionality to be able to search through contacts
+     * @param menu    the menu where the search feature is on
+     * */
+    private void setupSearchView(Menu menu) {
+        MenuItem searchItem = menu.findItem(R.id.menu_search);
+        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+
+        SearchView searchView  = null;
+        if (searchItem != null) searchView = (SearchView) searchItem.getActionView();
+
+        if (searchView != null) {
+            searchView.setSearchableInfo(searchManager.getSearchableInfo(getActivity().getComponentName()));
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    if (recyclerAdapter != null) recyclerAdapter.filter(newText);
+                    return true;
+                }
+            });
+        }
+    }
+
+    /** Sets up the contact list adapter with the latest list of contacts */
+    private void setupListAdapter() {
+        //create the adapter if it hasn't been already
+        if(recyclerAdapter == null) {
+            recyclerAdapter = new ContactAdapter(getActivity(), new OnContactClickListener() {
+                @Override
+                public void onClick(Contact contact) {
+                    if(contact != null) {
+                        Intent intent = new Intent(getActivity(), ContactDetailActivity.class);
+                        intent.putExtra(ContactDetailActivity.EXTRA_CONTACT_ID, contact.getId());
+                        getActivity().startActivity(intent);
+                    }
+                }
+            });
+            recyclerList.setAdapter(recyclerAdapter);
+        }
+
+        //update the data in the adapter
+        List<Contact> contactList = NetMeApp.getContactList();
+        if(contactList.size() > 0) recyclerAdapter.setContactList(contactList);
+
+        updateEmptyMessage();
+    }
+
+    /** Changes what is visible depending on the state of the contacts and registered checks. */
+    private void updateViewMode() {
+        if(NetMeApp.isLoadingContacts()) {
+            Log.d(TAG, "changing to loading contacts view mode");
+            recyclerList.setVisibility(View.INVISIBLE);
+            swipeRefreshLayout.setRefreshing(true);
+        }
+        else if (NetMeApp.isCheckingRegistrations()) {
+            Log.d(TAG, "changing to checking registrations view mode");
+            recyclerList.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setRefreshing(true);
+        }
+        else {
+            Log.d(TAG, "changing to normal view mode");
+            recyclerList.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setRefreshing(false);
+        }
+    }
+
+    /** Updates the empty list to show the empty message if no contacts were found */
+    private void updateEmptyMessage() {
+        if(recyclerAdapter.getTotalCount() < 1) emptyMsg.setText(R.string.no_contacts);
+        else emptyMsg.setText("");
+    }
+}

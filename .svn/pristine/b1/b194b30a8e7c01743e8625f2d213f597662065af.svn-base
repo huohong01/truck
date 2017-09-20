@@ -1,0 +1,125 @@
+package com.hsdi.NetMe.ui.startup.recovery;
+
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.models.response_models.BaseResponse;
+import com.hsdi.NetMe.network.RestServiceGen;
+import com.hsdi.NetMe.util.AccountInfoUtils;
+import com.hsdi.NetMe.util.DialogUtils;
+import com.hsdi.NetMe.util.PreferenceManager;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class RecoveryMethodFragment extends Fragment {
+    private static final String TAG = "RecoveryMethodFrag";
+
+    @Bind(R.id.recovery_method_email_entry)EditText emailET;
+    @Bind(R.id.recovery_method_submit_btn)Button submitBtn;
+
+    private RecoveryCommunications recoveryListener;
+    private PreferenceManager manager;
+
+
+    public RecoveryMethodFragment() {
+        // Required empty public constructor
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_recovery_method, container, false);
+        ButterKnife.bind(this, view);
+        manager = PreferenceManager.getInstance(getActivity());
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        submitBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String email = AccountInfoUtils.checkEmail(getActivity(), emailET);
+
+                if(email != null){
+                    // show the user a progress dialog
+                    final ProgressDialog progressDialog = DialogUtils.getProgressDialog(getActivity());
+                    progressDialog.show();
+
+                    // start the request
+                    RestServiceGen.getUnCachedService()
+                            .userForgotPassword(email,manager.getPhoneNumber())
+                            .enqueue(new Callback<BaseResponse>() {
+                                @Override
+                                public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                                    // progress dialog no longer needed
+                                    if (progressDialog != null)
+                                        progressDialog.dismiss();
+
+                                    // if successful show the success screen
+                                    if(response.body() != null && response.body().isSuccess())
+                                        recoveryListener.onRecoverySuccess();
+                                        // if not successful show te failed screen
+                                    else
+                                        recoveryListener.onRecoveryFailed();
+                                }
+
+                                @Override
+                                public void onFailure(Call<BaseResponse> call, Throwable t) {
+                                    // progress dialog no longer needed
+                                    if (progressDialog != null)
+                                        progressDialog.dismiss();
+
+                                    // if here, assuming connection error
+                                    DialogUtils.getErrorDialog(getActivity(), R.string.error_connection).show();
+                                }
+                            });
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof RecoveryCommunications) {
+            recoveryListener = (RecoveryCommunications) context;
+        }
+        else {
+            throw new RuntimeException(context.toString() + " must implement RecoveryCommunications");
+        }
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        if (activity instanceof RecoveryCommunications) {
+            recoveryListener = (RecoveryCommunications) activity;
+        }
+        else {
+            throw new RuntimeException(activity.toString() + " must implement RecoveryCommunications");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        recoveryListener = null;
+    }
+}

@@ -1,0 +1,541 @@
+package com.hsdi.NetMe;
+
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.database.ContentObserver;
+import android.os.AsyncTask;
+import android.provider.ContactsContract;
+import android.support.multidex.MultiDexApplication;
+import android.util.Log;
+
+import com.flurry.android.FlurryAgent;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.hsdi.MinitPay.util.SharePrefManager;
+import com.hsdi.NetMe.database.ContactsManager;
+import com.hsdi.NetMe.database.RegisteredContactManager;
+import com.hsdi.NetMe.models.Contact;
+import com.hsdi.NetMe.models.Participant;
+import com.hsdi.NetMe.models.Phone;
+import com.hsdi.NetMe.models.events.EventContactList;
+import com.hsdi.NetMe.models.events.EventRegistrationCheck;
+import com.hsdi.NetMe.models.response_models.GetUsersResponse;
+import com.hsdi.NetMe.network.RestServiceGen;
+import com.hsdi.NetMe.pwd.PwdManager;
+import com.hsdi.NetMe.ui.chat.util.MessageManager;
+import com.hsdi.NetMe.util.PreferenceManager;
+import com.hsdi.NetMe.util.VersionUtils;
+import com.macate.csmp.CSMPCrypt;
+import com.macate.csmp.CSMPCryptException;
+
+import org.greenrobot.eventbus.EventBus;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class NetMeApp extends MultiDexApplication {
+    private static final String TAG = "NetMeApp";
+
+    private static NetMeApp instance;
+
+    private PreferenceManager prefManager               = null;
+
+    private static String currentUser                   = null;
+    private static String currentUserAvatarUrl          = null;
+    private static boolean currentUserLoggedIn          = false;
+
+    private ContactsObserver contactsObserver;
+
+    private static List<Contact> contactList            = null;
+    private static Map<String, Contact> numberToContact = null;
+    private static Map<Long, Contact> idToContact       = null;
+
+    private static boolean loadingContacts              = true;
+    private static boolean checkingRegistrations        = false;
+
+    //running chat information tracking, used to determine weather to update the chat or show a
+    // notification to the user about a new incoming message
+    private static boolean chatRunning                  = false;
+    private static long currentChatId                   = -1;
+    private static long currentMeetingId                = -1;
+    private static long newCallId                       = -1;
+    private static boolean newCallHandledStatus         = false; /*TODO remove this and save meeting id in instance state*/
+
+    private static MessageManager msgManager            = null;
+    private static String aesTAG                        = null;
+    private  SharePrefManager sharedPreManager    = null;
+    public static PwdManager pwdManager;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        instance = this;
+        try {
+            pwdManager = PwdManager.getThiz(this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        prefManager = PreferenceManager.getInstance(this);
+
+        sharedPreManager = SharePrefManager.getInstance(this);
+        String currentVersion = VersionUtils.getApkVersion(this);
+        String lastVersion = prefManager.getVersionName();
+        if (!currentVersion.equals(lastVersion)){
+            Log.i(TAG, "onCreate: ");
+            prefManager.cleanSharedPreference();
+            sharedPreManager.cleanSharePrefManager();
+            prefManager.setVersion(this);
+        }
+
+        /*TODO figure this out*/
+//        RavenFactory.registerFactory(new NetMeRavenFactory());
+
+        new FlurryAgent.Builder()
+                .withLogEnabled(false)
+                .build(this, "X62BTBY3SV5QWR6JSRQ6");
+
+        try {CSMPCrypt.Initialize(this.getApplicationContext(), 192);}
+        catch (CSMPCryptException e) {
+            Log.e("NetMeApp", "Failed to initialize the CodeTel encryption library", e);
+            FlurryAgent.onError("NetMeApp", "Failed to initialize the CodeTel encryption library", e);
+        }
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+    }
+
+
+
+    @Override
+    public void onTerminate() {
+        // Unregister contact observer
+        if (contactsObserver != null) getContentResolver().unregisterContentObserver(contactsObserver);
+
+        // prepare the message manager for garbage collection
+        if(msgManager != null) msgManager.prepareForGarbageCollection();
+
+        super.onTerminate();
+    }
+
+    /**
+     * Returns the singleton instance of the application class for this app
+     * @return instance of this class
+     * */
+    public static NetMeApp getInstance() {
+        return instance;
+    }
+
+    /** Returns an instance of the PreferenceManager */
+    public PreferenceManager getPrefManager() {
+        return prefManager;
+    }
+
+    public String getAesTAG() {
+        if (aesTAG == null) aesTAG = getString(R.string.aes_tag);
+        return aesTAG;
+    }
+
+
+//--------------------------------------- Current User ---------------------------------------------
+
+
+    /** Returns the current the phone number/username for the current user (Digits only) */
+    public static String getCurrentUser() {
+        if(currentUser == null) currentUser = getInstance().getPrefManager().getUsername();
+        return PhoneNumberUtil.normalizeDigitsOnly(currentUser);
+    }
+
+    /** Returns the string url for the current user */
+    public static String getCurrentUserAvatarUrl() {
+        if(currentUserAvatarUrl == null) currentUserAvatarUrl = getInstance().getPrefManager().getAvatarUrl();
+        return currentUserAvatarUrl;
+    }
+
+    /**
+     * Checks if the current user's avatar url is valid.
+     * To be valid, the url can not be empty and it can not be the default url.
+     * @return {@code TRUE} if the url is valid, {@code FALSE} otherwise
+     * */
+    public static boolean currentUserHasValidAvatarUrl() {
+        // makes sure the the url has been retrieved and stored in the local field
+        getCurrentUserAvatarUrl();
+        return currentUserAvatarUrl != null
+                && !currentUserAvatarUrl.isEmpty()
+                && !currentUserAvatarUrl.contains(getInstance().getString(R.string.default_avatar));
+    }
+
+    /** Clears out the current user's information from the NetMeApp class local fields */
+    public static void resetCurrentStaticUser() {
+        currentUser = null;
+        currentUserAvatarUrl = null;
+    }
+
+    /**
+     * Updates the loggedIn status for the current user
+     * @param status    {@code TRUE} to mark as logged in, {@code FALSE} otherwise
+     * */
+    public static void setCurrentUserLoggedInStatus(boolean status) {
+        currentUserLoggedIn = status;
+    }
+
+    /**
+     * Returns whether the current user has been marked as logged in.
+     * @return the logged in status for the current user. ({@code TRUE} or {@code FALSE})
+     * */
+    public boolean isCurrentUserLoggedIn() {
+        return currentUserLoggedIn;
+    }
+
+
+//-------------------------------------- Contact Loading ------------------------------------------
+
+
+    /**
+     * an observer which will listen for changes in the contacts class. This will cause the contact
+     * list to be reloaded in the case of a change.
+     * */
+    private class ContactsObserver extends ContentObserver {
+        public ContactsObserver() {
+            super(null);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            super.onChange(selfChange);
+            prefManager.resetTimeToCheckContactRegistrations();
+            loadContactList();
+        }
+    }
+
+    /**
+     * sets up an observer for the contacts database in case one hasn't been setup already
+     * */
+    private void SetupContactObserver() {
+        if(contactsObserver == null) {
+            contactsObserver = new ContactsObserver();
+
+            getContentResolver().registerContentObserver(
+                    ContactsContract.Contacts.CONTENT_URI, true, contactsObserver
+            );
+        }
+    }
+
+    /**
+     * Loads the contacts from the device on a background thread and uses the EventContactList
+     * EventBus event to alert any registered applications when done loading.
+     **/
+    public static void loadContactList() {
+        loadingContacts = true;
+
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                //setting up
+                contactList = ContactsManager.getAllContacts(getInstance());
+                idToContact = new HashMap<>();
+                numberToContact = new HashMap<>();
+
+                // update the contact list with the registration and favorite statuses from the database
+                RegisteredContactManager.updateContactList(instance, contactList);
+
+                //sort the list
+                Collections.sort(contactList);
+
+                //for every contact add their id and phone numbers to the respective maps
+                for(Contact contact : contactList){
+                    //add the id to the map
+                    idToContact.put(contact.getId(), contact);
+
+                    for(Phone phone : contact.getPhones()) {
+                        numberToContact.put(phone.getPlainNumber(), contact);
+                    }
+                }
+
+                //check if it is time to check the registered user list
+                if(getInstance().getPrefManager().isTimeToCheckContactRegistrations()) {
+                    checkContactRegistrations();
+                }
+
+                //set loading to false/done
+                loadingContacts = false;
+
+                //send an alert that the contacts have been reloaded
+                EventBus.getDefault().post(new EventContactList());
+
+                //setup an observer to listen for any changes in the contact list
+                NetMeApp.getInstance().SetupContactObserver();
+            }
+        });
+    }
+
+    /**
+     * Sends the current list of contacts to the backend to determine if any are registered.
+     * Any registered contacts are stored on a local database.
+     * Once all operations are complete, an EventRegistrationCheck EventBus event is sent out to
+     * alert any registered classes.
+     *
+     * **NOTE: depending on the number of contacts a user has, getting all the numbers prepared to
+     *      send to the backend for check could be too taxing to be run on the main thread. This
+     *      SHOULD BE CALLED IN A BACKGROUND THREAD!
+     * */
+    private static void checkContactRegistrations() {
+        checkingRegistrations = true;
+        // using the mapping of numbers to contact's key set to build the list of numbers to check
+        String contactNumbers = numberToContact.keySet().toString();
+
+        final PreferenceManager manager = getInstance().getPrefManager();
+
+        RestServiceGen.getCachedService()
+                .getUsersFromContacts(
+                        manager.getCountryCallingCode(),
+                        manager.getPhoneNumber(),
+                        manager.getPassword(),
+                        contactNumbers.replace("[","").replace("]","").replace(" ","")
+                )
+                .enqueue(new Callback<GetUsersResponse>() {
+                    @Override
+                    public void onResponse(Call<GetUsersResponse> call, Response<GetUsersResponse> response) {
+                        // if the response is good
+                        if(response.body() != null && response.body().getUsers() != null) {
+                            //getting the returned list of registered phone numbers
+                            List<Participant> users = response.body().getUsers();
+
+                            //for every returned registered user
+                            for(Participant user : users) {
+                                try {
+                                    //find the specific contact object
+                                    Contact contact = numberToContact.get(user.getUsername());
+                                    contact.setRegistered(true);
+                                    contact.setAvatarUrl(user.getAvatarUrl());
+
+                                    //updating the database
+                                    RegisteredContactManager.addRegisteredContact(instance, contact, user);
+
+                                    //updating the contact list
+                                    int listLocation = contactList.indexOf(contact);
+                                    contactList.set(listLocation, contact);
+
+                                    //updating the numberToContact map
+                                    numberToContact.put(user.getUsername(), contact);
+
+                                    //updating the idToContact map
+                                    idToContact.put(contact.getId(), contact);
+                                }
+                                catch (NullPointerException ignore) { /*ignore*/ }
+                            }
+                        }
+
+                        //setting that the contacts registration have been check so it won't be checked
+                        // again until the predetermined amount of time has passed
+                        manager.setRegisteredContactsChecked();
+
+                        //setting the registration check is done
+                        checkingRegistrations = false;
+
+                        //alert any registered classes that the check has finished
+                        EventBus.getDefault().post(new EventRegistrationCheck());
+                    }
+
+                    @Override
+                    public void onFailure(Call<GetUsersResponse> call, Throwable t) {
+                        Log.e(TAG, "Failed to get registered users");
+                        t.printStackTrace();
+
+                        //setting that registration check is done
+                        checkingRegistrations = false;
+
+                        //alert any registered classes that the check has finished
+                        EventBus.getDefault().post(new EventRegistrationCheck());
+                    }
+                });
+    }
+
+    /**
+     * Returns the list of contacts
+     * @return the contact list
+     * */
+    public static List<Contact> getContactList() {
+        if(contactList == null) return new ArrayList<>();
+        else return contactList;
+    }
+
+    /**
+     * Returns the first contact with a matching contact id
+     * @return contact
+     * */
+    public static Contact getContactWith(Long contactId) {
+        if(idToContact != null) return idToContact.get(contactId);
+        else return null;
+    }
+
+    /**
+     * Returns the first contact with a matching phone number
+     * @return contact
+     * */
+    public static Contact getContactWith(String phoneNumber) {
+        // try to get the contact using the passed phone number and the number to contact mapping
+        if(numberToContact != null && phoneNumber != null) return numberToContact.get(phoneNumber);
+        // nothing found, returning null
+        else return null;
+    }
+
+    /**
+     * Returns weather the contact list is being loaded or not
+     * @return FALSE if the list has finished being loaded, TRUE otherwise
+     * */
+    public static boolean isLoadingContacts() {
+        return loadingContacts;
+    }
+
+    /**
+     * Returns weather the registered users are being checked
+     * @return TRUE if users are being checked, FALSE otherwise
+     * */
+    public static boolean isCheckingRegistrations() {
+        return checkingRegistrations;
+    }
+
+
+//--------------------------------------- Text Chat Tracking ---------------------------------------
+
+
+    /**
+     * Check if ChatActivity is visible on the screen (running in foreground)
+     * @param chatId     the chat id
+     * @return TRUE if in foreground, false otherwise
+     */
+    public static boolean isChatVisible(long chatId) {
+        return chatRunning && currentChatId == chatId;
+    }
+
+    /**
+     * store an identifier for a chat which is active
+     * @param chatId    the chat id
+     * */
+    public static void setCurrentChat(long chatId) {
+        // storing the active chatId so that others can check if and which chat is active
+        currentChatId = chatId;
+    }
+
+    /**
+     * Sets weather a chat is running, so that other classes can check it without having an
+     * instance if the chat class
+     * @param runningStatus    TRUE if running (foreground or background), FALSE otherwise
+     * */
+    public static void setChatVisible(boolean runningStatus) {
+        chatRunning = runningStatus;
+    }
+
+    /**
+     * Returns an instance of the MessageManager for the requested chat.
+     * If there is already a MessageManager set up for the requested chat, that Manager is reused.
+     * @param requestedChatId    the id for the requested chat
+     * @return the MessageManager for the requested chat
+     * */
+    public MessageManager getMsgManagerForChat(long requestedChatId) throws Exception {
+        Log.d(TAG, "requested message manager for chat " + requestedChatId);
+
+        // if the manager has not been created or is for another chat, create a new one
+        if(msgManager == null) {
+            Log.d(TAG, "no old message manager, creating new one");
+            msgManager = new MessageManager(getInstance(), requestedChatId);
+        }
+        // in the case where on already exists
+        else if(msgManager.getChatId() != requestedChatId) {
+            Log.d(TAG, "message manager already exists, deleting old one and creating new manager");
+            msgManager.prepareForGarbageCollection();
+            System.gc();
+            msgManager = new MessageManager(getInstance(), requestedChatId);
+        }
+
+        Log.d(TAG, "returning message manager for chat " + msgManager.getChatId());
+        return msgManager;
+    }
+
+
+//--------------------------------------- Video Chat Tracking --------------------------------------
+
+    /**
+     * store an identifier for a video meeting which is active
+     * @param meetingId    the video meeting id
+     * */
+    public static void setCurrentMeeting(long meetingId) {
+        // storing the active meetingId so that others can check if and which meeting is active
+        currentMeetingId = meetingId;
+    }
+
+    /**
+     * resets the current meeting trackers
+     * */
+    public static void resetMeetingTrackers(){
+        chatRunning = false;
+        currentMeetingId = -1;
+        currentChatId = -1;
+    }
+
+    /**
+     * Sets that the current meeting call is a new yet to be handled incoming call.
+     * Used to make sure that the Chat Activity doesn't use old intents.
+     * @param meetingId       the id of the new call
+     * @param newCall    the state to update the new call tracker to
+     * */
+    public static void setCallHandledStatus(long meetingId, boolean newCall) {
+        newCallId = meetingId;
+        newCallHandledStatus = newCall;
+    }
+
+    /**
+     * Returns if the call being received is a new incoming call
+     * */
+    public static boolean isCallUnhandled(long meetingId) {
+        return meetingId >= newCallId && newCallHandledStatus;
+    }
+
+    private Stack<Activity> activityStack = new Stack<>();
+
+    //添加activity
+    public void addActivity(Activity activity) {
+        activityStack.push(activity);
+    }
+
+    public void removeActivity(Activity activity) {
+        if (!activityStack.isEmpty() && activityStack.peek().hashCode() == activity.hashCode())
+            activityStack.pop();
+    }
+
+    //退出App
+    public void exit() {
+        while (!activityStack.isEmpty()) {
+            Activity activity = activityStack.peek();
+            activity.finish();
+            activityStack.pop();
+        }
+        System.exit(0);
+    }
+
+    public void Restart() {
+        while (!activityStack.isEmpty()) {
+            Activity activity = activityStack.peek();
+            activity.finish();
+            activityStack.pop();
+        }
+        Intent i = new Intent();
+        ComponentName cn = new ComponentName("com.hsdi.NetMe", "com.hsdi.NetMe.ui.startup.PhoneRetrievalActivity");
+        i.setComponent(cn);
+        i.setAction("android.intent.action.MAIN");
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(i);
+    }
+
+}

@@ -1,0 +1,439 @@
+package com.hsdi.NetMe.ui.main.recent_logs;
+
+import android.app.SearchManager;
+import android.content.Context;
+import android.os.Bundle;
+import android.support.annotation.IntDef;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.database.MeetingManager;
+import com.hsdi.NetMe.models.Meeting;
+import com.hsdi.NetMe.models.events.EventContactList;
+import com.hsdi.NetMe.models.events.EventMeetingLog;
+import com.hsdi.NetMe.models.response_models.BaseResponse;
+import com.hsdi.NetMe.models.response_models.GetMeetingLogsResponse;
+import com.hsdi.NetMe.network.RestServiceGen;
+import com.hsdi.NetMe.util.PreferenceManager;
+import com.hsdi.theme.basic.BaseThemeActivity;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.util.List;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static com.hsdi.theme.basic.ThemeLayoutInflaterFactory.ThemeTypeValue.menuitem_icon;
+
+public class RecentFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({})
+    public @interface FilterType {
+    }
+
+    public static final int FILTER_ALL = 0;
+    public static final int FILTER_MISSED = 1;
+    public static final int FILTER_INCOMING = 2;
+    public static final int FILTER_OUTGOING = 3;
+
+    @Bind(R.id.main_swipe_refresh)
+    SwipeRefreshLayout swipeRefreshLayout;
+    @Bind(R.id.main_recycler_view)
+    RecyclerView recyclerList;
+    @Bind(R.id.main_empty_message)
+    TextView emptyMsg;
+
+    private static final int defLoadCount = 25;
+
+    private static RecentAdapter recyclerAdapter;
+    private LinearLayoutManager layoutManager;
+    private static PreferenceManager prefManager;
+    private boolean isLoading = false;
+    private boolean allLoaded = false;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View main = inflater.inflate(R.layout.fragment_main, container, false);
+        ButterKnife.bind(this, main);
+
+        prefManager = PreferenceManager.getInstance(getActivity());
+
+        setHasOptionsMenu(true);
+
+        swipeRefreshLayout.setColorSchemeResources(R.color.primary_accent, R.color.primary, R.color.primary_dark, R.color.primary);
+        swipeRefreshLayout.setOnRefreshListener(this);
+
+        setupList();
+
+      /*  List<Meeting> meetings = MeetingManager.getAllMeetings(NetMeApp.getInstance());
+        if (meetings != null && meetings.size() > 0) {
+            recyclerAdapter.addAll(meetings);
+            if (meetings.size() < defLoadCount) allLoaded = true;
+        } else {
+            loadList(1, defLoadCount);
+        }*/
+
+        // Load the first page of meeting logs
+         loadList(1, defLoadCount);
+
+        // Register broadcast receiver
+        EventBus.getDefault().register(this);
+
+        return main;
+    }
+
+    @Override
+    public void onDestroy() {
+        EventBus.getDefault().unregister(this);
+        recyclerAdapter = null;
+        layoutManager = null;
+        prefManager = null;
+        super.onDestroy();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_recent, menu);
+        setupSearchView(menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        ((BaseThemeActivity)getActivity()).applyTheme(menu.findItem(R.id.menu_recent_search),R.drawable.search,menuitem_icon);
+        super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public void onRefresh() {
+        // determining what to load
+        int loadCount = recyclerAdapter.getTotalCount();
+        if (loadCount < defLoadCount) loadCount = defLoadCount;
+
+        // reloading all the current meeting logs
+        loadList(1, loadCount);
+    }
+
+    /**
+     * Sets up the search area to filter the recent log list in the adapter
+     */
+    private void setupSearchView(Menu menu) {
+        MenuItem searchItem = menu.findItem(R.id.menu_recent_search);
+        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+
+        SearchView searchView = null;
+        if (searchItem != null) searchView = (SearchView) searchItem.getActionView();
+
+        if (searchView != null) {
+            searchView.setSearchableInfo(searchManager.getSearchableInfo(getActivity().getComponentName()));
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    if (recyclerAdapter != null)
+                        recyclerAdapter.filter(newText);
+
+                    return true;
+                }
+            });
+        }
+
+        // Show only the toolbar when SearchView is expanded, and vice versa
+        MenuItemCompat.setOnActionExpandListener(searchItem, new MenuItemCompat.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                return true;
+            }
+        });
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * EventBus listener method which refresh's the entire list every time a EventMeetingLog
+     * event is posted
+     *
+     * @param eventMeetingLog the posted event, ignored
+     */
+    @SuppressWarnings("unused")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onMeetingsUpdated(EventMeetingLog eventMeetingLog) {
+        onRefresh();
+    }
+
+    /**
+     * EventBus subscriber method which refreshes the contacts list in the adapter
+     *
+     * @param eventContactList the posted event, ignored
+     */
+    @SuppressWarnings("unused")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onContactsUpdated(EventContactList eventContactList) {
+        if (recyclerAdapter != null) recyclerAdapter.notifyDataSetChanged();
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Updates the filter type in the adapter
+     *
+     * @param type the filter type
+     */
+    public void filterType(@FilterType int type) {
+        if (recyclerAdapter != null) recyclerAdapter.filter(type);
+    }
+
+    /**
+     * Show the SwipeRefreshLayout refreshing spinner. Makes sure it is done on the main thread.
+     */
+    private void showLoadingBar() {
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.post(new Runnable() {
+                @Override
+                public void run() {
+                    swipeRefreshLayout.setRefreshing(true);
+                }
+            });
+        }
+    }
+
+    /**
+     * Hide the SwipeRefreshLayout refreshing spinner. Makes sure it is done on the main thread.
+     */
+    private void hideLoadingBar() {
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.post(new Runnable() {
+                @Override
+                public void run() {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+            });
+        }
+    }
+
+    /**
+     * Sets up the list with the linear layout manager, adapter, and scroll listener which will
+     * request that the list gets the next set when the bottom is reached.
+     */
+    private void setupList() {
+        layoutManager = new LinearLayoutManager(getActivity());
+        recyclerAdapter = new RecentAdapter(this);
+        recyclerList.setLayoutManager(layoutManager);
+        recyclerList.setAdapter(recyclerAdapter);
+
+        // setting the scroll listener to update the list when hitting the bottom
+        recyclerList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                // ignore if empty or the items are filtered
+                if (recyclerAdapter == null || isLoading || allLoaded) return;
+
+                // load the list if it is near the bottom, the list isn't empty, && it isn't already loading
+                int lastVisible = layoutManager.findLastCompletelyVisibleItemPosition();
+                int lowerLoadLimit = recyclerAdapter.getTotalCount() - 2;
+                if (lastVisible >= lowerLoadLimit) {
+                    // determining what page needs to be loaded next
+                    //      Math -> find the current number of whole pages and add one so it loads the next set
+                    final int page = (recyclerAdapter.getTotalCount() / defLoadCount) + 1;
+
+                    // loads the next set
+                    loadList(page, defLoadCount);
+                }
+            }
+        });
+    }
+
+    /**
+     * Updates the empty message depending on the total items of messages
+     */
+    private void updateEmptyMessage() {
+        if (recyclerAdapter.getTotalCount() < 1) emptyMsg.setText(R.string.no_recent);
+        else emptyMsg.setText("");
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Removes a meeting from the local and backend log lists.
+     * If it fails to be removed, the user is alerted with a snackbar that has a retry button.
+     *
+     * @param meeting the meeting to remove
+     */
+    protected void removeMeeting(final Meeting meeting) {
+        //show loading
+        showLoadingBar();
+        isLoading = true;
+
+        //perform the remove request
+        RestServiceGen.getUnCachedService()
+                .removeMeeting(
+                        prefManager.getCountryCallingCode(),
+                        prefManager.getPhoneNumber(),
+                        prefManager.getPassword(),
+                        meeting.getMeetingId()
+                )
+                .enqueue(new Callback<BaseResponse>() {
+                    @Override
+                    public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                        //done loading
+                        hideLoadingBar();
+                        isLoading = false;
+
+                        if (response != null && response.body() != null && response.body().isSuccess()) {
+                            recyclerAdapter.remove(meeting);
+
+                            Toast.makeText(getActivity(), R.string.meeting_removed, Toast.LENGTH_SHORT).show();
+                            System.out.println("deleted, count: " + recyclerAdapter.getTotalCount());
+                        }
+                        // if the response was bad, allow the user to retry
+                        else showRetry();
+                    }
+
+                    @Override
+                    public void onFailure(Call<BaseResponse> call, Throwable t) {
+                        //done loading
+                        hideLoadingBar();
+                        isLoading = false;
+
+                        showRetry();
+                    }
+
+                    /**
+                     * Shows a retry option to allow the user to retry deleting the meeting
+                     * */
+                    private void showRetry() {
+                        if (recyclerList == null) {
+                            return;
+                        }
+                        Snackbar.make(recyclerList, R.string.error_meeting_remove, Snackbar.LENGTH_LONG)
+                                .setAction(
+                                        R.string.retry,
+                                        new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                removeMeeting(meeting);
+                                            }
+                                        }
+                                )
+                                .show();
+                    }
+                });
+    }
+
+    /**
+     * loads the video chat meeting log list
+     *
+     * @param page      the page to load
+     * @param loadCount the number of logs to load
+     */
+    private void loadList(final int page, final int loadCount) {
+        showLoadingBar();
+        isLoading = true;
+
+        RestServiceGen.getCachedService()
+                .getMeetingLogs(
+                        prefManager.getCountryCallingCode(),
+                        prefManager.getPhoneNumber(),
+                        prefManager.getPassword(),
+                        page,
+                        loadCount
+                )
+                .enqueue(new Callback<GetMeetingLogsResponse>() {
+                    @Override
+                    public void onResponse(Call<GetMeetingLogsResponse> call, Response<GetMeetingLogsResponse> response) {
+                        Log.d("recent", "on response");
+                        // if the response is good
+                        if (response != null && response.body() != null && response.body().isSuccess()) {
+                            // getting the returned meetings
+                            List<Meeting> meetings = response.body().getMeetings();
+                            if (meetings != null && !meetings.isEmpty()) {
+                                for (Meeting meeting : meetings) {
+                                    MeetingManager.storeMeeting(getActivity(), meeting);
+                                }
+                            }
+                            // nothing more to load if the returned number is less then the default count
+                            if (meetings != null && meetings.size() < defLoadCount)
+                                allLoaded = true;
+
+                            if (recyclerAdapter == null) {
+                                return;
+                            }
+                            // add the meetings only if there is something to add
+                            if (meetings != null) recyclerAdapter.addAll(meetings);
+                        }
+                        // if the response was bad, allow the user to retry
+                        else showRetry();
+
+                        hideLoadingBar();
+                        isLoading = false;
+
+                        updateEmptyMessage();
+                    }
+
+                    @Override
+                    public void onFailure(Call<GetMeetingLogsResponse> call, Throwable t) {
+                        Log.d("recent", "on failure ", t);
+                        hideLoadingBar();
+                        isLoading = false;
+                        showRetry();
+                        updateEmptyMessage();
+                    }
+
+                    private void showRetry() {
+                        if (recyclerList == null) {
+                            return;
+                        }
+                        Snackbar.make(recyclerList, R.string.error_load, Snackbar.LENGTH_LONG)
+                                .setAction(
+                                        R.string.retry,
+                                        new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                loadList(page, loadCount);
+                                            }
+                                        }
+                                )
+                                .show();
+                    }
+                });
+    }
+}

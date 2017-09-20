@@ -1,0 +1,95 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 24
+    buildToolsVersion '25.0.0'
+
+    defaultConfig {
+        applicationId "com.hsdi.NetMe"
+        minSdkVersion 19
+        targetSdkVersion 24
+        versionCode 29
+        versionName "2.3.0 (Build 1708.31)"
+//        TODO bring this back when compiling doesn't take forever
+//        jackOptions {
+//            enabled true
+//        }
+        // Enabling multidex support.
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            jniDebuggable false
+            renderscriptDebuggable false
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES.txt'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/dependencies.txt'
+        exclude 'META-INF/LGPL2.1'
+    }
+//    TODO bring this back when compiling doesn't take forever
+//    compileOptions {
+//        targetCompatibility 1.8
+//        sourceCompatibility 1.8
+//    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.android.support:multidex:1.0.1'
+    // Views
+    compile 'com.android.support:appcompat-v7:24.2.1'
+    compile 'com.android.support:recyclerview-v7:24.2.1'
+    compile 'com.android.support:support-v4:24.2.1'
+    compile 'com.android.support:support-v13:24.2.1'
+    compile 'com.android.support:percent:24.2.1'
+    compile 'com.android.support:design:24.2.1'
+    // receive notifications
+    compile 'com.google.android.gms:play-services-gcm:9.6.1'
+    // gets the users location when sending and viewing maps
+    compile 'com.google.android.gms:play-services-location:9.6.1'
+    compile 'com.google.android.gms:play-services-maps:9.6.1'
+    // A Sentry client for Java and other JVM languages. https://sentry.io
+    compile 'com.getsentry.raven:raven-android:7.8.0'
+    // Java serialization/deserialization library that can convert Java Objects into JSON and back
+    compile 'com.google.code.gson:gson:2.6.2'
+    // Google phone number utilities
+    compile 'com.googlecode.libphonenumber:libphonenumber:7.4.0'
+    // error tracking, mainly used for production applications
+    compile 'com.flurry.android:analytics:6.5.0'
+    //swipe list view create by Chau Thai from the Macate Washington office
+    compile 'com.chauthai.swipereveallayout:swipe-reveal-layout:1.4.0'
+    // An HTTP & SPDY client for Android and Java applications
+    compile 'com.squareup.okhttp3:okhttp:3.2.0'
+    // Type-safe REST client
+    compile 'com.squareup.retrofit2:retrofit:2.1.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+    compile 'com.squareup.okhttp3:logging-interceptor:3.3.1'
+    // loads and caches images
+    compile 'com.squareup.picasso:picasso:2.5.2'
+    // view boilerplate
+    compile 'com.jakewharton:butterknife:7.0.1'
+    // app wide event management
+    compile 'org.greenrobot:eventbus:3.0.0'
+    // Image cropping
+    compile 'com.soundcloud.android:android-crop:1.0.1@aar'
+    // Tutorial builder
+    compile 'com.getkeepsafe.taptargetview:taptargetview:1.5.0'
+    compile 'za.co.riggaroo:materialhelptutorial:1.+'
+    compile project(':minitpay')
+    compile project(':theme')
+    compile 'com.githang:status-bar-compat:latest.integration'
+}

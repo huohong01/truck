@@ -1,0 +1,78 @@
+[
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_msg.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_msg.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_recent.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_recent.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_msg_save.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_msg_save.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_contacts.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_contacts.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_details.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\menu\\menu_details.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_attach_for_video.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_attach_for_video.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_fav.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_fav.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_msg_failed.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_msg_failed.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_msg_edit.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_msg_edit.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_select_contacts.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_select_contacts.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_image_view.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_image_view.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_text_chat_group.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_text_chat_group.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_attach.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_attach.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_start.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_start.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_text_chat_single.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_text_chat_single.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_map.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_map.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_msg_delete.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_msg_delete.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_msg_copy.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_msg_copy.xml"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\debug\\menu\\menu_contact_details.xml",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\src\\main\\res\\menu\\menu_contact_details.xml"
+    }
+]

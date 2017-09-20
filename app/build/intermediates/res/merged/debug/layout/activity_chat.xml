@@ -1,0 +1,46 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:yuyong="http://schemas.android.com/yuyong"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <EditText
+        android:id="@+id/chat_invisible_edit_text"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        android:inputType="none"/>
+
+    <!-- Fragment Containers -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:weightSum="2"
+        android:background="@color/primary">
+
+        <FrameLayout
+            android:id="@+id/chat_video_frag_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <FrameLayout
+            android:id="@+id/chat_text_frag_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+    </LinearLayout>
+
+    <!-- Close Chat Button -->
+    <ImageView
+        yuyong:yuyong_theme_type="src"
+        android:id="@+id/chat_hide_chat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="25dp"
+        android:src="@drawable/close_chat_button"
+        android:onClick="onHideChatClicked"
+        android:visibility="invisible"/>
+</RelativeLayout>

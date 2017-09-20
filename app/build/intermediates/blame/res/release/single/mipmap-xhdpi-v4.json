@@ -1,0 +1,42 @@
+[
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi-v4\\no_wifi_ico.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\mipmap-xhdpi-v4\\no_wifi_ico.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi-v4\\down_arrow_ico.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\mipmap-xhdpi-v4\\down_arrow_ico.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi-v4\\ic_plan.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\mipmap-xhdpi-v4\\ic_plan.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi-v4\\ic_launcher.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\mipmap-xhdpi-v4\\ic_launcher.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi-v4\\warning_ico.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\mipmap-xhdpi-v4\\warning_ico.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi-v4\\add_circle_ico.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\mipmap-xhdpi-v4\\add_circle_ico.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi-v4\\ic_back_arrow.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\mipmap-xhdpi-v4\\ic_back_arrow.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi-v4\\ic_progress.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\mipmap-xhdpi-v4\\ic_progress.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi-v4\\success_icon.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\mipmap-xhdpi-v4\\success_icon.png"
+    },
+    {
+        "merged": "F:\\work\\dailyWork\\20170821\\NetMe\\app\\build\\intermediates\\res\\merged\\release\\mipmap-xhdpi-v4\\ic_tick.png",
+        "source": "F:\\work\\dailyWork\\20170821\\NetMe\\minitpay\\build\\intermediates\\bundles\\default\\res\\mipmap-xhdpi-v4\\ic_tick.png"
+    }
+]

@@ -1,0 +1,46 @@
+package com.hsdi.theme.basic;
+
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+
+import com.hsdi.theme.handler.ThemeHandler;
+
+import java.util.HashMap;
+
+public class BaseThemeActivity extends AppCompatActivity {
+
+    private ThemeLayoutInflaterFactory mThemeFactory;
+
+    public void applyTheme(View v, int id) {
+        applyTheme(v, id, null);
+    }
+
+    public void applyTheme(View v, int id, ThemeLayoutInflaterFactory.ThemeTypeValue type) {
+        HashMap map = mThemeFactory.getHandlers();
+        if (map == null)
+            return;
+        ThemeHandler handler = (ThemeHandler) map.get(v);
+        if (handler == null) {
+            handler = ThemeHandlerFactory.getHandler(v, type, null);
+            if (handler != null)
+                handler.init(this);
+        }
+        if (handler == null)
+            return;
+        handler.doHandler(id);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        mThemeFactory = new ThemeLayoutInflaterFactory();
+        getLayoutInflater().setFactory(mThemeFactory);
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        mThemeFactory.onDestroy();
+        super.onDestroy();
+    }
+}

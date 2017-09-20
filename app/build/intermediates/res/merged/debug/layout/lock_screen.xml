@@ -1,0 +1,91 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:paddingLeft="@dimen/padding_20dp"
+    android:paddingRight="@dimen/padding_20dp"
+    android:paddingTop="@dimen/padding_20dp"
+    android:paddingBottom="@dimen/padding_20dp">
+    <com.devspark.robototextview.widget.RobotoTextView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="@string/lock_screen"
+        android:id="@+id/tvTitle"
+        app:fontFamily="roboto"
+        app:textWeight="normal"
+        android:textSize="@dimen/composeDialogTitle"
+        android:textColor="@color/black"
+        android:gravity="center"
+        android:layout_marginTop="@dimen/padding_20dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignStart="@+id/etLock" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@+id/tvTitle"
+        android:background="@color/bgGray"
+        android:id="@+id/vDivider"
+        android:layout_marginBottom="@dimen/padding_10dp"/>
+
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/etLock"
+        android:maxLength="20"
+        android:inputType="textPassword"
+        android:layout_below="@+id/vDivider"
+        android:digits="@string/password_digits"
+        android:textColor="@color/black"
+        android:theme="@style/MyEditTextBlackTheme"
+        android:layout_margin="@dimen/padding_10dp"
+        android:textColorHint="@color/black"
+        android:padding="@dimen/padding_10dp"
+        android:hint="@string/password_label"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textSize="@dimen/loginFontSize" />
+
+
+
+    <com.devspark.robototextview.widget.RobotoTextView
+        android:id="@+id/tvOk"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/bOk"
+        android:textColor="@color/btnBackground"
+        app:fontFamily="roboto"
+        app:textWeight="ultra_bold"
+        android:textAllCaps="true"
+        android:layout_marginLeft="@dimen/padding_40dp"
+        android:layout_marginRight="@dimen/padding_40dp"
+        android:textSize="@dimen/newMessageDialogTextSize"
+        android:paddingLeft="@dimen/padding_10dp"
+        android:layout_marginTop="27dp"
+        android:paddingRight="@dimen/padding_10dp"
+        android:layout_below="@+id/etLock"
+        android:layout_toStartOf="@+id/tvClose" />
+
+    <com.devspark.robototextview.widget.RobotoTextView
+        android:id="@+id/tvClose"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/bClose"
+        android:textColor="@color/btnBackground"
+        app:fontFamily="roboto"
+        app:textWeight="ultra_bold"
+        android:layout_marginRight="@dimen/padding_40dp"
+        android:layout_marginLeft="@dimen/padding_40dp"
+        android:textAllCaps="true"
+        android:textSize="@dimen/newMessageDialogTextSize"
+        android:paddingLeft="@dimen/padding_10dp"
+        android:paddingRight="@dimen/padding_10dp"
+
+        android:layout_alignTop="@+id/tvOk"
+        android:layout_alignEnd="@+id/etLock" />
+
+
+
+</RelativeLayout>

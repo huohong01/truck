@@ -1,0 +1,420 @@
+package com.hsdi.NetMe.ui.main.favorites;
+
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.SearchManager;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.hsdi.NetMe.NetMeApp;
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.database.ChatTrackerManager;
+import com.hsdi.NetMe.database.RegisteredContactManager;
+import com.hsdi.NetMe.models.Contact;
+import com.hsdi.NetMe.models.events.EventContactList;
+import com.hsdi.NetMe.models.events.EventFavorite;
+import com.hsdi.NetMe.ui.chat.ChatActivity;
+import com.hsdi.NetMe.ui.contact_selection.SelectContactsActivity;
+import com.hsdi.NetMe.util.CircleTransformation;
+import com.hsdi.NetMe.util.PhoneUtils;
+import com.hsdi.NetMe.util.SelectPhoneCallback;
+import com.hsdi.theme.basic.BaseThemeActivity;
+import com.squareup.picasso.Picasso;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.Collections;
+import java.util.List;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+import static android.app.Activity.RESULT_OK;
+import static com.hsdi.theme.basic.ThemeLayoutInflaterFactory.ThemeTypeValue.menuitem_icon;
+
+public class FavoritesFragment extends Fragment implements OnFavoritesSelectedListener {
+
+    private static final int SPAN_COUNT = 3;
+    private static final int REQUEST_CODE_SELECT_CONTACT = 1000;
+
+    @Bind(R.id.main_swipe_refresh)
+    SwipeRefreshLayout swipeRefreshLayout;
+    @Bind(R.id.main_recycler_view)
+    RecyclerView recyclerList;
+    @Bind(R.id.main_empty_message)
+    TextView emptyMsg;
+
+    private FavoritesAdapter adapter;
+
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_main, container, false);
+        ButterKnife.bind(this, v);
+
+        setHasOptionsMenu(true);
+
+        EventBus.getDefault().register(this);
+
+        recyclerList.setLayoutManager(new GridLayoutManager(getActivity(), SPAN_COUNT));
+
+        loadFavorites();
+
+        return v;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // if everything returns fine update the selected contacts
+        if (requestCode == REQUEST_CODE_SELECT_CONTACT && resultCode == RESULT_OK) {
+            String[] selectedNumbers = data.getStringArrayExtra(SelectContactsActivity.RESULT_CONTACT_NUMBERS);
+
+            // go through all the selected numbers
+            if (selectedNumbers != null && selectedNumbers.length > 0) {
+                for (String number : selectedNumbers) {
+                    // find the contact with this number
+                    Contact contact = NetMeApp.getContactWith(number);
+
+                    // ignore if the contact was not found
+                    if (contact == null) continue;
+
+                    // update the contact's favorite status to be a favorite
+                    contact.setFavorite(true);
+
+                    // update the database, passing null for the registered number
+                    RegisteredContactManager.updateContact(getActivity(), contact, number);
+
+                    // update the global list
+                    List<Contact> contactList = NetMeApp.getContactList();
+                    contactList.remove(contact);
+                    contactList.add(contact);
+
+                    // send and update notice to all registered classes
+                    EventBus.getDefault().post(new EventFavorite(EventFavorite.ADDED, contact));
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_fav, menu);
+        setupSearchView(menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        ((BaseThemeActivity) getActivity()).applyTheme(menu.findItem(R.id.menu_search), R.drawable.search, menuitem_icon);
+        ((BaseThemeActivity) getActivity()).applyTheme(menu.findItem(R.id.menu_item_add_favorite), R.drawable.add, menuitem_icon);
+        super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.menu_item_add_favorite) {
+            Intent selectIntent = new Intent(getActivity(), SelectContactsActivity.class);
+            selectIntent.putExtra(SelectContactsActivity.EXTRA_CONTACT_TYPE, SelectContactsActivity.NONFAVORITES);
+
+            this.startActivityForResult(selectIntent, REQUEST_CODE_SELECT_CONTACT);
+
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onDestroy() {
+        EventBus.getDefault().unregister(this);
+        adapter = null;
+        super.onDestroy();
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * EventBus subscriber method which refreshes the favorites list in the adapter
+     *
+     * @param event the posted event, ignored
+     */
+    @SuppressWarnings("unused")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updateFavorites(EventFavorite event) {
+        loadFavorites();
+    }
+
+    /**
+     * EventBus subscriber method which refreshes the contacts list in the adapter
+     *
+     * @param eventContactList the posted event, ignored
+     */
+    @SuppressWarnings("unused")
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updateContacts(EventContactList eventContactList) {
+        loadFavorites();
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Loads the favorites contacts from the database in the background and updates the screen
+     */
+    private void loadFavorites() {
+        // show the progress bar
+        swipeRefreshLayout.setRefreshing(true);
+
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                // get the contact lists
+                List<Contact> allContacts = NetMeApp.getContactList();
+                final List<Contact> favorites = RegisteredContactManager.getFavoriteContacts(getActivity(), allContacts);
+
+                // make sure to sort the list
+                Collections.sort(favorites);
+
+                // hide the progress bar
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // setup the adapter
+                            setupAdapter(favorites);
+
+                            swipeRefreshLayout.setRefreshing(false);
+
+                            if (favorites.size() <= 0) emptyMsg.setText(R.string.no_favorites);
+                            else emptyMsg.setText("");
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    /**
+     * Initializes and updates the list adapter with the favorite contacts passed
+     *
+     * @param favorites the list of favorite contacts
+     */
+    private void setupAdapter(List<Contact> favorites) {
+        // creating an adapter with an empty list if it doesn't exist
+        if (adapter == null) {
+            adapter = new FavoritesAdapter(getActivity(), this);
+            recyclerList.setAdapter(adapter);
+        }
+
+        // updating the list of favorites
+        adapter.setFavoritesList(favorites);
+    }
+
+    /**
+     * Initializes the the searching function
+     */
+    private void setupSearchView(Menu menu) {
+        MenuItem searchItem = menu.findItem(R.id.menu_search);
+        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+
+        SearchView searchView = null;
+        if (searchItem != null) searchView = (SearchView) searchItem.getActionView();
+
+        if (searchView != null) {
+            searchView.setSearchableInfo(searchManager.getSearchableInfo(getActivity().getComponentName()));
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    if (adapter != null)
+                        adapter.filter(newText);
+                    return true;
+                }
+            });
+        }
+    }
+
+    /**
+     * Displays a dialog to the user to let them choose whether they wish to start
+     * a video chat or a text chat
+     */
+    private void showStartActionDialog(Contact contact, final String phoneNumber) {
+        // custom dialog
+        final Dialog dialog = new Dialog(getActivity());
+        dialog.setContentView(R.layout.dialog_favorites_choice);
+
+        // get the custom dialog components
+        TextView name = (TextView) dialog.findViewById(R.id.favorites_dialog_name);
+        ImageView avatar = (ImageView) dialog.findViewById(R.id.favorites_dialog_avatar);
+        ImageView chatBtn = (ImageView) dialog.findViewById(R.id.favorites_dialog_chat_btn);
+        ImageView videoBtn = (ImageView) dialog.findViewById(R.id.favorites_dialog_video_btn);
+
+        // set the info
+        name.setText(contact.getFirstName());
+        if (contact.getAvatarUri() != null) {
+            Picasso.with(getActivity())
+                    .load(contact.getAvatarUri())
+                    .placeholder(R.drawable.empty_avatar)
+                    .transform(new CircleTransformation())
+                    .into(avatar);
+        } else {
+            avatar.setImageResource(R.drawable.empty_avatar);
+            ((BaseThemeActivity) getActivity()).applyTheme(avatar, R.drawable.empty_avatar);
+        }
+
+        chatBtn.setImageResource(R.drawable.fav_chat);
+        ((BaseThemeActivity) getActivity()).applyTheme(chatBtn, R.drawable.fav_chat);
+
+        videoBtn.setImageResource(R.drawable.fav_video);
+        ((BaseThemeActivity) getActivity()).applyTheme(videoBtn, R.drawable.fav_video);
+
+
+        // setup button actions
+        chatBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startTextChatWith(phoneNumber);
+                dialog.dismiss();
+            }
+        });
+        videoBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startVideoChatWith(phoneNumber);
+                dialog.dismiss();
+            }
+        });
+
+        // show the dialog
+        dialog.show();
+    }
+
+    /**
+     * Starts a VIDEO chat with the passed number or continues a pre-existing one if it exists
+     *
+     * @param phoneNumber the number to start/continue the chat with
+     */
+    private void startVideoChatWith(String phoneNumber) {
+        // check if a chat already exists
+        long chatId = ChatTrackerManager.getChatIdFromPhoneNumber(getActivity(), phoneNumber);
+
+        // add invited phone number
+        Intent intent = new Intent(getActivity(), ChatActivity.class);
+        intent.putExtra(ChatActivity.EXTRA_CHAT_TYPE, ChatActivity.TYPE_START_VIDEO);
+        intent.putExtra(ChatActivity.EXTRA_INVITED, phoneNumber);
+
+        // chat exists so add it
+        if (chatId >= 0) intent.putExtra(ChatActivity.EXTRA_CHAT_ID, chatId);
+
+        // start video chat activity
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getActivity().startActivity(intent);
+    }
+
+    /**
+     * Starts a TEXT chat with the passed number or continues a pre-existing one if it exists
+     *
+     * @param phoneNumber the number to start/continue the chat with
+     */
+    private void startTextChatWith(String phoneNumber) {
+        // check if a chat already exists
+        long chatId = ChatTrackerManager.getChatIdFromPhoneNumber(getActivity(), phoneNumber);
+
+        // chat exists so continue it
+        if (chatId >= 0) {
+            Intent intent = new Intent(getActivity(), ChatActivity.class);
+            intent.putExtra(ChatActivity.EXTRA_CHAT_TYPE, ChatActivity.TYPE_TEXT_ONLY);
+            intent.putExtra(ChatActivity.EXTRA_CHAT_ID, chatId);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getActivity().startActivity(intent);
+        }
+        // tell the chat activity to start a new chat
+        else {
+            Intent intent = new Intent(getActivity(), ChatActivity.class);
+            intent.putExtra(ChatActivity.EXTRA_CHAT_TYPE, ChatActivity.TYPE_TEXT_ONLY);
+            intent.putExtra(ChatActivity.EXTRA_INVITED, phoneNumber);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getActivity().startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onSelected(final Contact contact) {
+        String phoneNumber = RegisteredContactManager.getFavoriteNumberForContact(getActivity(), contact.getId());
+
+        // the number from the database should be good, but check it just in case. if it is good, start the call
+        if (phoneNumber != null && !phoneNumber.isEmpty() && getActivity() != null) {
+            showStartActionDialog(contact, phoneNumber); // TODO figure out the ordering for this
+        }
+        // something went wrong getting the number from the database, just ask the user for it instead
+        else {
+            PhoneUtils.getRegisteredNumber(
+                    getActivity(),
+                    contact,
+                    new SelectPhoneCallback() {
+                        @Override
+                        public void selectedNumberIs(Contact contact, String phoneNumber) {
+                            if (getActivity() != null) showStartActionDialog(contact, phoneNumber);
+                        }
+                    }
+            );
+        }
+    }
+
+    @Override
+    public void onLongSelected(final Contact contact) {
+        if (contact == null) return;
+
+        new AlertDialog.Builder(getActivity())
+                .setMessage(
+                        String.format(
+                                getActivity().getString(R.string.remove_favorite_confirmation),
+                                contact.getFirstName()
+                        )
+                )
+                .setPositiveButton(R.string.remove, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //update the local contact object
+                        contact.setFavorite(false);
+                        //un-mark the contact as a favorite on the database
+                        RegisteredContactManager.updateContact(getContext(), contact, (String) null);
+                        //remove the contact from view
+                        adapter.remove(contact);
+                        //send an update to all registered classes abou the change
+                        EventBus.getDefault().post(new EventFavorite(EventFavorite.REMOVED, contact));
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+}

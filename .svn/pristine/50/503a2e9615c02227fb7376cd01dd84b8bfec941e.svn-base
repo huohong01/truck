@@ -1,0 +1,218 @@
+package com.hsdi.NetMe.ui.contact_detail;
+
+import android.app.Activity;
+import android.content.ContentUris;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.hsdi.NetMe.NetMeApp;
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.database.ContactsManager;
+import com.hsdi.NetMe.database.RegisteredContactManager;
+import com.hsdi.NetMe.models.Contact;
+import com.hsdi.NetMe.models.events.EventFavorite;
+import com.hsdi.NetMe.util.PhoneUtils;
+import com.hsdi.NetMe.util.SelectPhoneCallback;
+import com.hsdi.theme.basic.BaseThemeActivity;
+import com.squareup.picasso.Picasso;
+
+import org.greenrobot.eventbus.EventBus;
+
+import java.util.List;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+public class ContactDetailActivity extends BaseThemeActivity {
+
+    public static final String EXTRA_CONTACT_ID = "extra_contact_id";
+
+    private static final int REQUEST_CODE = 1;
+
+    @Bind(R.id.details_toolbar)             Toolbar toolbar;
+    @Bind(R.id.details_avatar)              ImageView ivAvatar;
+    @Bind(R.id.details_name)                TextView tvName;
+    @Bind(R.id.details_phones_list_view)    RecyclerView recyclerView;
+    @Bind(R.id.details_favorites_btn)       Button favoriteBtn;
+
+    private Contact contact;
+    private DetailAdapter adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_contact_detail);
+        ButterKnife.bind(this);
+
+        //setting up the toolbar
+        toolbar.setTitle("");
+        setSupportActionBar(toolbar);
+        toolbar.setNavigationIcon(R.drawable.back);
+        applyTheme(toolbar,R.drawable.back);
+
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        //getting requested contact
+        long contactId = getIntent().getExtras().getLong(EXTRA_CONTACT_ID);
+        contact = ContactsManager.getContact(this, contactId);
+
+        //setting up the rest of the UI
+        setUIContent();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            if (contact != null) {
+                //reloading the contact with the new information
+                Contact editedContact = ContactsManager.getContact(this, contact.getId());
+                if (editedContact != null) {
+                    contact = editedContact;
+
+                    //setting the new contact info
+                    setUIContent();
+                }
+            }
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_contact_details, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.details_edit && contact != null) {
+            Uri uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, contact.getId());
+
+            Intent intent  = new Intent(Intent.ACTION_EDIT);
+            intent.setDataAndType(uri, ContactsContract.Contacts.CONTENT_ITEM_TYPE);
+            intent.putExtra("finishActivityOnSaveCompleted", true);
+
+            startActivityForResult(intent, REQUEST_CODE);
+
+            return true;
+        }
+        return false;
+    }
+
+    /** Sets up everything related to the UI views */
+    private void setUIContent() {
+        if (contact != null) {
+            tvName.setText(contact.getName());
+            if (contact.getAvatarUri()!=null){
+                Picasso.with(this)
+                        .load(contact.getAvatarUri())
+                        .placeholder(R.drawable.empty_avatar)
+                        .into(ivAvatar);
+            }else {
+                ivAvatar.setImageResource(R.drawable.empty_avatar);
+                applyTheme(ivAvatar,R.drawable.empty_avatar);
+            }
+
+
+            if(adapter == null) adapter = new DetailAdapter(this);
+            adapter.setContact(contact);
+
+            // Load phones and emails
+            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+            recyclerView.setHasFixedSize(true);
+            recyclerView.setAdapter(adapter);
+
+            //show these buttons only if registered
+            if(contact.isRegistered() && contact.isFavorite()) favoriteBtn.setText(R.string.remove_favorites);
+            else if (contact.isRegistered()) favoriteBtn.setText(R.string.add_favorites);
+            else {
+                favoriteBtn.setText(R.string.send_invite);
+                favoriteBtn.setAllCaps(false);
+            }
+        }
+    }
+
+    /** called by the add to favorites button */
+    public void onFavoriteClicked(View view) {
+        if (contact.isRegistered()) toggleFavoriteStatus();
+        else getNumberToInvite();
+    }
+
+    /** Updates the database, local view, and any fragments/activities which show/mark favorite users */
+    public void toggleFavoriteStatus() {
+        PhoneUtils.getRegisteredNumber(
+                this,
+                contact,
+                new SelectPhoneCallback() {
+                    @Override
+                    public void selectedNumberIs(Contact contact, String phoneNumber) {
+                        if(contact != null) {
+                            boolean status = !contact.isFavorite();
+                            contact.setFavorite(status);
+
+                            //update the database, passing null for the registered number
+                            RegisteredContactManager.updateContact(
+                                    ContactDetailActivity.this,
+                                    contact,
+                                    phoneNumber
+                            );
+
+                            //setting the contact will cause an update to the values which will cause the
+                            // favorite start to be shown or hidden
+                            if(adapter != null)
+                                adapter.setContact(contact);
+
+                            //update the global list
+                            List<Contact> contactList = NetMeApp.getContactList();
+                            contactList.remove(contact);
+                            contactList.add(contact);
+
+                            //send and update notice to all registered classes
+                            EventBus.getDefault().post(
+                                    new EventFavorite(
+                                            status ? EventFavorite.ADDED : EventFavorite.REMOVED,
+                                            contact
+                                    )
+                            );
+
+                            favoriteBtn.setText(status ? R.string.remove_favorites : R.string.add_favorites);
+                        }
+                    }
+                }
+        );
+    }
+
+    /** gets a phone to send the text message invite to and sends the invite */
+    public void getNumberToInvite() {
+        PhoneUtils.selectPhoneNumber(
+                this,
+                contact,
+                new SelectPhoneCallback() {
+                    @Override
+                    public void selectedNumberIs(Contact contact, String phoneNumber) {
+                        if(!TextUtils.isEmpty(phoneNumber)) {
+                            PhoneUtils.sendInvite(ContactDetailActivity.this, phoneNumber);
+                        }
+                    }
+                }
+        );
+    }
+}

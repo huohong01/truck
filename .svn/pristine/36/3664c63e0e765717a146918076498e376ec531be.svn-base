@@ -1,0 +1,97 @@
+package com.hsdi.NetMe.ui.chat.text.helper_activities;
+
+import android.content.Context;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import com.hsdi.NetMe.NetMeApp;
+import com.hsdi.NetMe.R;
+import com.hsdi.NetMe.models.ManagedMessage;
+import com.hsdi.NetMe.ui.chat.util.MessageManager;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
+public class EditMessageActivity extends AppCompatActivity {
+    private static final String TAG = "EditMsgAct";
+
+    public static final String EXTRA_CHAT_ID = "chatId";
+    public static final String EXTRA_MESSAGE_ID = "messageId";
+
+    @Bind(R.id.chat_message_entry)  EditText editText;
+    @Bind(R.id.edit_msg_toolbar)    Toolbar toolbar;
+
+    private MessageManager msgManager;
+    private ManagedMessage message;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_edit_msg);
+        ButterKnife.bind(this);
+
+        // setting up the toolbar
+        toolbar.setTitle(R.string.edit_message_title);
+        setSupportActionBar(toolbar);
+        toolbar.setNavigationIcon(R.drawable.back);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // getting the managed message
+        long chatId = getIntent().getLongExtra(EXTRA_CHAT_ID, -1);
+        long messageId = getIntent().getLongExtra(EXTRA_MESSAGE_ID, -1);
+
+        try {
+            msgManager = NetMeApp.getInstance().getMsgManagerForChat(chatId);}
+        catch (Exception e) {
+            Log.e(TAG, "Failed to get a good message manager", e);
+            Toast.makeText(this.getApplicationContext(), R.string.error_unexpected, Toast.LENGTH_SHORT).show();
+            finish();
+        }
+
+        message = msgManager.getMessageWithId(messageId);
+
+        // setting up the edit text
+        if(message != null) {
+            editText.setText(message.getDecryptedText());
+            editText.requestFocus();
+            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
+        }
+        // message could not be found exit edit activity
+        else finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        setResult(RESULT_CANCELED);
+        finish();
+    }
+
+    /** "Save" button clicked event call back */
+    public void onSaveClicked(View v) {
+        // send the message to be edited
+        msgManager.editMessageText(message, editText.getText().toString());
+
+        // done here so close out
+        finish();
+    }
+}
